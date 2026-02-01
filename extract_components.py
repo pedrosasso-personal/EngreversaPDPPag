@@ -297,8 +297,8 @@ def main():
                 "Domínio Funcional": domain
             })
 
-    # Escrever CSV
-    with open(output_file, 'w', newline='', encoding='utf-8') as f:
+    # Escrever CSV com BOM para Excel reconhecer UTF-8 corretamente
+    with open(output_file, 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.DictWriter(f, fieldnames=[
             "Sigla", "Descrição da Sigla", "Componente",
             "Descrição do Componente", "Domínio Funcional"
