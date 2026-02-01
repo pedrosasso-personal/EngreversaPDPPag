@@ -1,159 +1,91 @@
-# Ficha Técnica do Sistema
+```markdown
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
+### 1. Descrição Geral
+O sistema "DebAdvice" é um serviço atômico desenvolvido para processar e validar transações de débito e advice. Ele integra com sistemas externos para efetivar o processamento de advice enviado pela DXC, realizando operações de validação, processamento, estorno e desfazimento de transações. O sistema também gerencia logs de erros e atualizações de transações no banco de dados.
 
-Sistema atômico responsável pelo processamento de mensagens de Advice (confirmação/estorno de transações) enviadas pela DXC para transações de cartão de débito. O sistema valida e processa diferentes tipos de advice (aprovação, estorno, desfazimento e desfazimento por sistema indisponível), atualizando as bases de dados de controle de transações e integrando com sistemas de efetivação via Google Cloud Pub/Sub.
+### 2. Principais Classes e Responsabilidades
+- **Application**: Classe principal que inicia a aplicação Spring Boot.
+- **AdviceConfiguration**: Configuração de beans para serviços e controladores.
+- **DataBaseConfiguration**: Configuração do banco de dados utilizando Jdbi.
+- **OpenApiConfiguration**: Configuração do Swagger para documentação de APIs.
+- **DebitoAdviceController**: Controlador responsável por expor endpoints para processar e validar advice.
+- **PubSubPublishImpl**: Implementação para enviar mensagens a um tópico Pub/Sub.
+- **CCBDRepositoryImpl**: Implementação do repositório para interagir com o banco de dados.
+- **AdviceService**: Classe abstrata que define o contrato para serviços de advice.
+- **AdviceAprovadoServiceImpl**: Implementação para processar advice de aprovação.
+- **AdviceErroServiceImpl**: Implementação para logar erros de advice.
+- **AutorizacaoDebitoServiceImpl**: Serviço para gerenciar autorizações de débito.
 
-## 2. Principais Classes e Responsabilidades
+### 3. Tecnologias Utilizadas
+- Spring Boot
+- Jdbi
+- Swagger
+- Google Cloud Pub/Sub
+- SQL Server
+- Maven
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| `DebitoAdviceController` | Controller REST que expõe endpoints para validação, processamento e consulta de advice |
-| `AdviceAprovadoServiceImpl` | Implementa lógica de validação e processamento de advice de aprovação |
-| `AdviceEstornoServiceImpl` | Implementa lógica de validação e processamento de advice de estorno |
-| `AdviceDesfazimentoServiceImpl` | Implementa lógica de validação e processamento de advice de desfazimento |
-| `AdviceSistemaIndisponivelServiceImpl` | Implementa lógica de validação e processamento de advice de desfazimento por sistema indisponível |
-| `AutorizacaoDebitoServiceImpl` | Gerencia consultas e atualizações de autorizações de débito sem advice |
-| `CCBDRepositoryImpl` | Interface de acesso ao banco de dados SQL Server usando JDBI |
-| `PubSubPublishImpl` | Publica mensagens de autorizações sem advice para fila do Google Cloud Pub/Sub |
-| `TipoAdviceEnum` | Enum que define os tipos de advice e instancia os serviços apropriados |
-
-## 3. Tecnologias Utilizadas
-
-- **Framework**: Spring Boot 2.x
-- **Linguagem**: Java 11
-- **Persistência**: JDBI 3.19.0 com SQL Server (Microsoft SQL Server JDBC Driver 7.4.0)
-- **Mensageria**: Google Cloud Pub/Sub (spring-cloud-gcp 2.0.11)
-- **Documentação API**: Swagger/OpenAPI 3.0 (Springfox 3.0.0)
-- **Segurança**: Spring Security OAuth2 com JWT
-- **Monitoramento**: Spring Actuator + Prometheus + Micrometer
-- **Logging**: Logback com formato JSON
-- **Build**: Maven 3.3+
-- **Containerização**: Docker
-
-## 4. Principais Endpoints REST
-
+### 4. Principais Endpoints REST
 | Método | Endpoint | Classe Controladora | Descrição |
 |--------|----------|---------------------|-----------|
-| POST | `/v1/validar` | DebitoAdviceController | Valida advice enviado pela DXC |
-| POST | `/v1/processar` | DebitoAdviceController | Processa advice validado |
-| POST | `/v1/log` | DebitoAdviceController | Registra log de erro de advice |
-| POST | `/v1/transacao-debito/confirmar-transacao` | DebitoAdviceController | Consulta e envia autorizações sem advice para efetivação |
-| PUT | `/v1/processarEfetivacaoInvalida` | DebitoAdviceController | Zera protocolo ITP de efetivação inválida |
-| PUT | `/v1/atualizarSequencialBloqueio` | DebitoAdviceController | Atualiza código sequencial de bloqueio |
-| PUT | `/v1/update-check-list` | DebitoAdviceController | Atualiza checklist de recebimento de advice |
-| GET | `/v1/consultar-authorization-code/{nsu}` | DebitoAdviceController | Consulta código de autorização por NSU |
-| GET | `/v1/consultar-codigo-processamento/{nsu}` | DebitoAdviceController | Consulta código de processamento por NSU |
+| POST   | /v1/validar | DebitoAdviceController | Valida advice enviado pela DXC |
+| POST   | /v1/processar | DebitoAdviceController | Processa advice enviado pela DXC |
+| POST   | /v1/log | DebitoAdviceController | Salva log de erro do advice enviado pela DXC |
+| POST   | /v1/transacao-debito/confirmar-transacao | DebitoAdviceController | Confirma transações de débito |
+| PUT    | /v1/processarEfetivacaoInvalida | DebitoAdviceController | Processa efetivação de débito inválida |
+| PUT    | /v1/atualizarSequencialBloqueio | DebitoAdviceController | Atualiza código sequencial de bloqueio |
+| PUT    | /v1/update-check-list | DebitoAdviceController | Atualiza tabela de chegada do advice |
+| GET    | /v1/consultar-authorization-code/{nsu} | DebitoAdviceController | Consulta código de autorização da transação |
+| GET    | /v1/consultar-codigo-processamento/{nsu} | DebitoAdviceController | Consulta código de processamento da transação |
 
-## 5. Principais Regras de Negócio
+### 5. Principais Regras de Negócio
+- Validação de advice com base em tipo de transação e status do autorizador.
+- Processamento de advice de aprovação, estorno e desfazimento.
+- Atualização de informações de transações no banco de dados.
+- Log de erros de advice para monitoramento e auditoria.
+- Integração com sistemas externos via Pub/Sub para envio de mensagens.
 
-- **Validação de Advice**: Identifica o tipo de advice (aprovação, estorno, desfazimento) baseado em código de transação e status do autorizador
-- **Processamento de Aprovação**: Atualiza transação original com dados do advice, valida moeda (nacional/internacional), calcula IOF quando aplicável
-- **Confirmação Parcial**: Detecta e processa confirmações parciais (valor do advice menor que valor original) gerando estorno da diferença
-- **Processamento de Estorno/Desfazimento**: Cria nova transação de estorno/desfazimento vinculada à transação original
-- **Validação de Transação Processada**: Impede reprocessamento de transações já efetivadas
-- **Tratamento de Voucher sem Autorizador**: Cria transação para vouchers Base2 que não passaram pelo autorizador
-- **Integração com Processadoras**: Trata diferenças entre processadoras DXC, PSM e BNK (XBNK/XPSM)
-- **Cálculo de ITPs**: Determina códigos ITP (transação, liquidação, evento, origem) baseados em tipo de transação, moeda e processadora
-- **Gestão de Bloqueios**: Gerencia sequências de bloqueio de saldo e processamento
-- **Checklist de Arquivos**: Atualiza controle de recebimento de arquivos (advice, TIF, bandeira)
+### 6. Relação entre Entidades
+- **AutorizacaoDebito**: Representa uma autorização de débito sem advice.
+- **DebtAdvice**: Contém informações detalhadas sobre advice de débito.
+- **Transacao**: Representa uma transação de cartão de débito.
+- **Estabelecimento**: Detalhes do estabelecimento comercial associado à transação.
+- **LogAdvice**: Informações de log para advice de erro.
 
-## 6. Relação entre Entidades
-
-**Entidades Principais:**
-
-- **ControleTransacaoCartao**: Entidade central que armazena dados da transação (valores, datas, códigos, status)
-- **TransacaoCartao**: Dados do cartão utilizado na transação (produto, correlativo, emissor, conta)
-- **EstabelecimentoComercial**: Dados do estabelecimento onde ocorreu a transação
-- **AutorizacaoCartao**: Código de autorização da transação (específico para BNK/PSM)
-- **ErroTransacaoCartao**: Log de erros no processamento de advice
-- **CheckListTransacaoArquivo**: Controle de recebimento de arquivos relacionados à transação
-
-**Relacionamentos:**
-- ControleTransacaoCartao (1) -> (1) TransacaoCartao
-- ControleTransacaoCartao (1) -> (1) EstabelecimentoComercial
-- ControleTransacaoCartao (1) -> (0..1) AutorizacaoCartao
-- ControleTransacaoCartao (1) -> (0..N) ErroTransacaoCartao
-- ControleTransacaoCartao (1) -> (0..1) CheckListTransacaoArquivo (via cdControleTransacaoCartaoAprovado)
-
-## 7. Estruturas de Banco de Dados Lidas
-
+### 7. Estruturas de Banco de Dados Lidas
 | Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
-|------------------------------|------|----------|-----------------|
-| TbControleTransacaoCartao | tabela | SELECT | Busca transações para validação de advice (por NSU ou identificador) |
-| TbTipoTransacao | tabela | SELECT | Consulta tipo de transação (0200, 0400, etc) |
-| TbRetornoTransacaoCartao | tabela | SELECT | Consulta código e descrição de retorno por status autorizador |
-| TbAutorizacaoCartao | tabela | SELECT | Consulta código de autorização por NSU |
-| TbEstabelecimentoComercial | tabela | SELECT | Dados do estabelecimento (via join com controle transação) |
+|-----------------------------|------|----------|-----------------|
+| TbAutorizacaoCartao         | tabela | SELECT   | Consulta código de autorização do cartão |
+| TbControleTransacaoCartao   | tabela | SELECT   | Consulta transações para aprovação e desbloqueio |
+| TbRetornoTransacaoCartao    | tabela | SELECT   | Consulta retorno de transações de cartão |
 
-## 8. Estruturas de Banco de Dados Atualizadas
-
+### 8. Estruturas de Banco de Dados Atualizadas
 | Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
-|------------------------------|------|----------|-----------------|
-| TbControleTransacaoCartao | tabela | INSERT | Insere nova transação de estorno/desfazimento ou voucher sem autorizador |
-| TbControleTransacaoCartao | tabela | UPDATE | Atualiza transação original com dados do advice de aprovação |
-| TbTransacaoCartao | tabela | INSERT | Insere dados do cartão para nova transação |
-| TbTransacaoCartao | tabela | UPDATE | Atualiza máscara do cartão na transação original |
-| TbEstabelecimentoComercial | tabela | INSERT | Insere dados do estabelecimento para nova transação |
-| TbEstabelecimentoComercial | tabela | UPDATE | Atualiza dados do estabelecimento na transação original |
-| TbAutorizacaoCartao | tabela | INSERT | Insere código de autorização (para BNK/PSM) |
-| TbErroTransacaoCartao | tabela | INSERT | Registra erros no processamento de advice |
-| TbCheckListTransacaoArquivo | tabela | UPDATE | Atualiza flags de recebimento de arquivos (advice, TIF, bandeira) |
+|-----------------------------|------|----------|-----------------|
+| TbControleTransacaoCartao   | tabela | UPDATE   | Atualiza controle de transações de cartão |
+| TbEstabelecimentoComercial  | tabela | UPDATE   | Atualiza informações de estabelecimento comercial |
+| TbTransacaoCartao           | tabela | UPDATE   | Atualiza informações de transações de cartão |
+| TbErroTransacaoCartao       | tabela | INSERT   | Insere log de erro de transação de cartão |
 
-## 9. Arquivos Lidos e Gravados
+### 9. Filas Lidas
+Não se aplica.
 
-não se aplica
+### 10. Filas Geradas
+- **business-ccbd-base-motor-conciliacao-debito**: Tópico Pub/Sub para envio de mensagens de advice sem processamento.
 
-## 10. Filas Lidas
+### 11. Integrações Externas
+- Google Cloud Pub/Sub para envio de mensagens.
+- APIs externas para autenticação e autorização via OAuth2.
 
-não se aplica
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
-## 11. Filas Geradas
+**Justificativa:** O código é bem estruturado e utiliza boas práticas de programação, como injeção de dependências e uso de interfaces para abstração. A documentação via Swagger facilita o entendimento dos endpoints. No entanto, poderia haver uma maior padronização nos nomes de métodos e variáveis para melhorar a legibilidade.
 
-| Nome da Fila | Tecnologia | Descrição |
-|--------------|------------|-----------|
-| `projects/bv-ccbd-des/topics/business-ccbd-base-motor-conciliacao-debito` | Google Cloud Pub/Sub | Publica autorizações de débito sem advice para processamento de efetivação |
+### 13. Observações Relevantes
+- O sistema utiliza o padrão de projeto de microserviços atômicos, facilitando a escalabilidade e manutenção.
+- A configuração do Swagger permite fácil acesso à documentação das APIs expostas.
+- A integração com o Google Cloud Pub/Sub é essencial para o processamento assíncrono de mensagens de advice.
 
-## 12. Integrações Externas
-
-| Sistema/Serviço | Tipo | Descrição |
-|-----------------|------|-----------|
-| DXC | API REST (consumidor) | Processadora que envia mensagens de advice |
-| XPSM/XBNK | API REST (consumidor) | Processadoras alternativas que enviam advice |
-| Google Cloud Pub/Sub | Mensageria | Publicação de autorizações sem advice para efetivação |
-| SQL Server (DBCCBD) | Banco de Dados | Armazenamento de transações e controles |
-| OAuth2/JWT | Segurança | Autenticação e autorização de requisições |
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota:** 7/10
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Boa separação de responsabilidades com camadas bem definidas (presentation, domain, infrastructure)
-- Uso adequado de padrões como Strategy (TipoAdviceEnum) e Builder
-- Código bem documentado com logs informativos
-- Uso de enums para constantes e mapeamentos de códigos
-- Tratamento de exceções customizadas
-- Testes unitários e de integração presentes
-
-**Pontos de Melhoria:**
-- Algumas classes de serviço muito extensas (AdviceAprovadoServiceImpl com ~300 linhas)
-- Lógica de negócio complexa com muitos ifs aninhados em alguns métodos
-- Uso de strings mágicas em alguns pontos (ex: "XPSM", "XBNK", "Base2")
-- Alguns métodos privados muito longos que poderiam ser refatorados
-- Comentários em português misturados com código em inglês
-- Falta de documentação JavaDoc em algumas classes públicas
-- Queries SQL embutidas em arquivos separados (bom), mas sem documentação do schema
-
-## 14. Observações Relevantes
-
-- O sistema utiliza JDBI ao invés de JPA/Hibernate, o que proporciona maior controle sobre as queries SQL mas requer mais código boilerplate
-- Há tratamento específico para diferentes processadoras (DXC, BNK, PSM) com lógicas distintas de mapeamento de ITPs
-- O sistema suporta transações nacionais e internacionais com cálculo de IOF para transações internacionais
-- Implementa controle de idempotência verificando se transações já foram processadas
-- Possui mecanismo de checklist para rastreamento de recebimento de múltiplos arquivos relacionados à mesma transação
-- A configuração permite diferentes ambientes (local, des, qa, uat, prd) com externalização de propriedades
-- Sistema preparado para observabilidade com Prometheus/Grafana e logs estruturados em JSON
-- Utiliza OAuth2 com JWT para segurança, com endpoints públicos configuráveis
+--- 
+```

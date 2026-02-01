@@ -1,162 +1,64 @@
-# Ficha Técnica do Sistema
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
+### 1. Descrição Geral
+O sistema é um serviço atômico para a gestão de DDA (Débito Direto Autorizado) desenvolvido em Java utilizando o framework Spring Boot. Ele fornece funcionalidades para consultar o status de DDA de clientes, integrando-se com um banco de dados Sybase para recuperar informações de clientes.
 
-O **sboot-pgft-base-atom-dda** é um serviço atômico desenvolvido em Spring Boot para gestão de DDA (Débito Direto Autorizado). O sistema permite consultar o status de adesão de clientes ao serviço DDA, retornando informações como data de adesão, dados de contato (email e telefone), operadora telefônica e preferências de notificação. O serviço é exposto via API REST e utiliza autenticação OAuth2 com JWT.
+### 2. Principais Classes e Responsabilidades
+- **Application**: Classe principal que inicia a aplicação Spring Boot.
+- **DdaController**: Controlador REST responsável por expor o endpoint para consulta de status de DDA.
+- **DdaService**: Serviço que contém a lógica de negócio para consultar informações de clientes DDA.
+- **DdaRepositoryImpl**: Implementação da interface de repositório para acesso ao banco de dados.
+- **Cliente**: Classe de domínio que representa um cliente DDA.
+- **Telefone**: Classe de domínio que representa um telefone associado ao cliente.
+- **DdaException**: Classe de exceção para erros relacionados ao domínio DDA.
 
----
+### 3. Tecnologias Utilizadas
+- Java 11
+- Spring Boot
+- JDBI para acesso a banco de dados
+- Sybase como banco de dados
+- Swagger para documentação de API
+- Docker para containerização
+- Maven para gerenciamento de dependências
 
-## 2. Principais Classes e Responsabilidades
+### 4. Principais Endpoints REST
+| Método | Endpoint                     | Classe Controladora | Descrição                           |
+|--------|------------------------------|---------------------|-------------------------------------|
+| GET    | /v1/atacado/dda/status       | DdaController       | Consulta o status de DDA de clientes|
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| `Application.java` | Classe principal que inicializa a aplicação Spring Boot com suporte a OAuth2 Resource Server |
-| `DdaController.java` | Controlador REST que expõe o endpoint de consulta de status DDA |
-| `DdaService.java` | Serviço de domínio que implementa a lógica de negócio para consulta de clientes DDA |
-| `DdaRepositoryImpl.java` | Implementação do repositório que acessa o banco de dados Sybase via JDBI |
-| `ClienteRowMapper.java` | Mapper responsável por converter ResultSet em objetos de domínio Cliente |
-| `Cliente.java` | Entidade de domínio representando um cliente DDA |
-| `Telefone.java` | Entidade de domínio representando dados telefônicos do cliente |
-| `ClienteHelper.java` | Classe utilitária para conversão de indicadores e validação de datas |
-| `ConversorHelper.java` | Classe utilitária para conversão entre objetos de domínio e representações REST |
-| `CpfCnpjJWTHelper.java` | Helper para extração de CPF/CNPJ do token JWT |
-| `DatabaseConfiguration.java` | Configuração do JDBI para acesso ao banco de dados |
-| `DdaConfiguration.java` | Configuração dos beans de serviço e repositório |
-| `OpenApiConfiguration.java` | Configuração do Swagger/OpenAPI para documentação da API |
+### 5. Principais Regras de Negócio
+- Consultar o status de DDA de um cliente utilizando seu CPF/CNPJ.
+- Converter informações de cliente para representações específicas para resposta de API.
+- Tratamento de exceções específicas do domínio DDA.
 
----
+### 6. Relação entre Entidades
+- **Cliente** possui um relacionamento com **Telefone**.
+- **Cliente** é recuperado através de consultas ao banco de dados utilizando **DdaRepositoryImpl**.
 
-## 3. Tecnologias Utilizadas
+### 7. Estruturas de Banco de Dados Lidas
+| Nome da Tabela/View/Coleção | Tipo     | Operação | Breve Descrição                     |
+|-----------------------------|----------|----------|-------------------------------------|
+| TbClienteDDA                | Tabela   | SELECT   | Armazena informações de clientes DDA|
 
-- **Java 11**
-- **Spring Boot 2.x** (framework principal)
-- **Spring Security OAuth2** (autenticação via JWT)
-- **JDBI 3.9.1** (acesso a banco de dados)
-- **Sybase ASE 16.3** (banco de dados)
-- **Swagger/Springfox 2.9.2** (documentação de API)
-- **Lombok** (redução de boilerplate)
-- **JUnit 5** (testes unitários)
-- **Mockito** (mocks para testes)
-- **Rest Assured** (testes funcionais)
-- **Pact** (testes de contrato)
-- **Maven** (gerenciamento de dependências)
-- **Docker** (containerização)
-- **Micrometer/Prometheus** (métricas)
-- **Logback** (logging)
+### 8. Estruturas de Banco de Dados Atualizadas
+Não se aplica.
 
----
+### 9. Filas Lidas
+Não se aplica.
 
-## 4. Principais Endpoints REST
+### 10. Filas Geradas
+Não se aplica.
 
-| Método | Endpoint | Classe Controladora | Descrição |
-|--------|----------|---------------------|-----------|
-| GET | `/v1/atacado/dda/status` | `DdaController` | Consulta o status de adesão DDA do cliente autenticado (CPF/CNPJ extraído do token JWT) |
+### 11. Integrações Externas
+- Integração com API de autenticação OAuth2 para segurança.
+- Utilização de Swagger para documentação de API.
 
----
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
-## 5. Principais Regras de Negócio
+**Justificativa:** O código está bem estruturado e organizado, utilizando boas práticas de desenvolvimento como injeção de dependências e separação de responsabilidades. A documentação e os testes são adequados, mas poderiam ser mais detalhados em algumas áreas para aumentar a clareza e manutenibilidade.
 
-1. **Autenticação obrigatória**: O endpoint requer autenticação OAuth2 com token JWT válido
-2. **Identificação do cliente**: O CPF/CNPJ do cliente é extraído automaticamente do token JWT
-3. **Conversão de indicadores**: Campos vazios ou nulos são convertidos para "N" (Não), valores preenchidos para "S" (Sim)
-4. **Dados de contato condicionais**: Email e telefone só são retornados se os respectivos indicadores de atualização estiverem ativos
-5. **Mapeamento de operadora**: O código da operadora telefônica é convertido para nome (VIVO, TIM, OI, CLARO, NEXTEL, OUTROS)
-6. **Retorno vazio**: Se o cliente não for encontrado, retorna lista vazia ao invés de erro
-7. **Tratamento de exceções**: Erros internos retornam HTTP 500 sem expor detalhes técnicos
-
----
-
-## 6. Relação entre Entidades
-
-**Cliente** (entidade principal)
-- Atributos: código, numeroCpfCnpj, dataAdesao, dataCancelamento, atualizacaoPorEmail, enderecoEmail, atualizacaoPorSms, condicoesGerais, arquivoVarredura
-- Relacionamento: 1 Cliente possui 0..1 Telefone (composição)
-
-**Telefone** (entidade dependente)
-- Atributos: numeroDDD, numeroTelefone, codigoOperadora, nomeOperadora
-- Relacionamento: pertence a 1 Cliente
-
----
-
-## 7. Estruturas de Banco de Dados Lidas
-
-| Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
-|-----------------------------|------|----------|-----------------|
-| TbClienteDDA | tabela | SELECT | Tabela principal contendo dados de clientes cadastrados no serviço DDA, incluindo informações de adesão, contato e preferências |
-
----
-
-## 8. Estruturas de Banco de Dados Atualizadas
-
-não se aplica
-
----
-
-## 9. Arquivos Lidos e Gravados
-
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| application.yml | leitura | Spring Boot | Arquivo de configuração da aplicação com profiles (local, des, qa, uat, prd) |
-| logback-spring.xml | leitura | Logback | Configuração de logging da aplicação |
-| getCliente.sql | leitura | DdaRepositoryImpl | Query SQL para consulta de dados do cliente DDA |
-| sboot-pgft-base-atom-dda.yaml | leitura | OpenApiConfiguration | Especificação OpenAPI/Swagger da API |
-
----
-
-## 10. Filas Lidas
-
-não se aplica
-
----
-
-## 11. Filas Geradas
-
-não se aplica
-
----
-
-## 12. Integrações Externas
-
-| Sistema/Serviço | Tipo | Descrição |
-|-----------------|------|-----------|
-| Servidor OAuth2/JWT | API REST | Validação de tokens JWT através do endpoint jwks.json para autenticação de usuários |
-| Banco Sybase ASE | Banco de dados | Acesso ao banco DBPGF_TES para consulta de dados de clientes DDA |
-
----
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota: 8/10**
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Arquitetura bem organizada seguindo padrões hexagonais (domain, application, infrastructure)
-- Separação clara de responsabilidades entre camadas
-- Uso adequado de injeção de dependências
-- Boa cobertura de testes unitários
-- Uso de Lombok para reduzir boilerplate
-- Configuração adequada de profiles para diferentes ambientes
-- Documentação via Swagger/OpenAPI
-- Uso de helpers para lógica de conversão
-
-**Pontos de Melhoria:**
-- Tratamento de exceções genérico no controller (captura Exception ao invés de exceções específicas)
-- Falta de validação de entrada (CPF/CNPJ)
-- Logs poderiam ser mais estruturados
-- Ausência de cache para consultas frequentes
-- Testes funcionais e de integração praticamente vazios
-- Falta de documentação inline em alguns métodos mais complexos
-
----
-
-## 14. Observações Relevantes
-
-1. **Segurança**: O sistema utiliza OAuth2 com JWT, extraindo automaticamente o CPF/CNPJ do usuário autenticado, evitando que o cliente informe manualmente sua identificação
-2. **Multi-ambiente**: Configuração preparada para múltiplos ambientes (local, des, qa, uat, prd) com diferentes conexões de banco e URLs de validação JWT
-3. **Monitoramento**: Endpoints do Actuator expostos na porta 9090 para health checks e métricas Prometheus
-4. **Containerização**: Dockerfile configurado com OpenJ9 para otimização de memória
-5. **Infraestrutura como código**: Arquivo infra.yml define configurações de deploy no Kubernetes/OpenShift
-6. **Pipeline CI/CD**: Configuração Jenkins presente (jenkins.properties) para automação de build e deploy
-7. **Arquitetura modular**: Projeto dividido em módulos Maven (common, domain, application) facilitando manutenção
-8. **Testes de arquitetura**: Profile Maven específico para validação de regras arquiteturais via ArchUnit
+### 13. Observações Relevantes
+- O projeto utiliza um modelo de microserviços atômicos, facilitando a escalabilidade e manutenção.
+- A configuração de segurança é feita através de OAuth2, garantindo proteção nas operações de API.
+- A documentação do Swagger facilita o entendimento e uso dos endpoints expostos.

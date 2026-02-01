@@ -1,152 +1,73 @@
-# Ficha Técnica do Sistema
+```markdown
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
-Sistema de validação de transferências TEF (Transferência Eletrônica de Fundos) do Banco Votorantim. O serviço é responsável por validar transferências entre contas bancárias, verificando dias úteis, horários permitidos e realizando críticas de agendamento quando necessário. Utiliza integração com sistemas legados via EJB para validação de calendário bancário e processamento de transferências.
+### 1. Descrição Geral
+O sistema é um serviço de validação de transferências eletrônicas de fundos (TEF) entre contas bancárias. Ele utiliza o modelo de microserviços e é desenvolvido em Java com Spring Boot. O serviço verifica se a transferência pode ser realizada com base em regras de negócio, como dias úteis e horários permitidos, e interage com sistemas legados para validação.
 
-## 2. Principais Classes e Responsabilidades
+### 2. Principais Classes e Responsabilidades
+- **AppProperties**: Configurações de propriedades do aplicativo.
+- **OpenApiConfiguration**: Configuração do Swagger para documentação de APIs.
+- **ValidarTransfTEFConfiguration**: Configuração de beans e integração com Camel.
+- **ValidarTransTEFController**: Controlador REST para validar transferências entre contas.
+- **ValidarTransfTEFService**: Serviço que realiza a validação de transferências TEF.
+- **ValidarTransfTEFRouter**: Define rotas Camel para processamento de validações TEF.
+- **IsDiaUtilRepositoryImpl**: Implementação de repositório para verificar se um dia é útil.
+- **ObterProximoDiaUtilRepositoryImpl**: Implementação de repositório para obter o próximo dia útil.
+- **ValidarAgendTEFRepositoryImpl**: Implementação de repositório para validar agendamentos TEF.
+- **ValidarTransfTEFRepositoryImpl**: Implementação de repositório para validar transferências TEF.
+- **CamelContextWrapper**: Wrapper para o contexto Camel.
+- **FormatarDados**: Utilitário para formatação de dados.
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| **ValidarTransTEFController** | Controller REST que expõe o endpoint de validação de transferências |
-| **ValidarTransfTEFService** | Serviço de negócio que orquestra a validação de transferências usando Apache Camel |
-| **ValidarTransfTEFRouter** | Rota Apache Camel que define o fluxo de validação (verificação de dia útil, horário, agendamento) |
-| **ValidarTransfTEFRepository** | Repositório para validação de transferência TEF via chamada ao legado |
-| **ValidarAgendTEFRepository** | Repositório para validação de agendamento de transferência TEF |
-| **IsDiaUtilRepository** | Repositório para verificar se uma data é dia útil |
-| **ObterProximoDiaUtilRepository** | Repositório para obter o próximo dia útil |
-| **FormatarDados** | Classe utilitária para formatação de datas e conversões |
-| **CamelContextWrapper** | Wrapper do contexto Apache Camel para gerenciamento de rotas |
-| **AppProperties** | Classe de configuração com propriedades da aplicação |
+### 3. Tecnologias Utilizadas
+- Java 11
+- Spring Boot
+- Apache Camel
+- Swagger
+- Lombok
+- Logback
+- Micrometer Prometheus
+- Rest Assured
+- Pact JVM
+- JWT
 
-## 3. Tecnologias Utilizadas
-- **Spring Boot 2.1.9** - Framework principal
-- **Apache Camel 2.24.2** - Orquestração de fluxos e integração
-- **Spring Security OAuth2** - Autenticação e autorização via JWT
-- **Swagger/OpenAPI 3.0** - Documentação de API
-- **Logback** - Logging estruturado
-- **Micrometer/Prometheus** - Métricas e monitoramento
-- **RestTemplate** - Cliente HTTP para integração com legado
-- **Lombok** - Redução de boilerplate
-- **Maven** - Gerenciamento de dependências
-- **Docker** - Containerização
-- **OpenShift/Kubernetes** - Orquestração de containers
-- **JDK 11** - Versão Java
-
-## 4. Principais Endpoints REST
-
+### 4. Principais Endpoints REST
 | Método | Endpoint | Classe Controladora | Descrição |
 |--------|----------|---------------------|-----------|
-| POST | /v1/transferencia-bancaria/validar-transferencia-contas | ValidarTransTEFController | Valida uma transferência entre contas, verificando dias úteis, horários e realizando críticas de negócio |
+| POST   | /v1/transferencia-bancaria/validar-transferencia-contas | ValidarTransTEFController | Valida transferências entre contas bancárias. |
 
-## 5. Principais Regras de Negócio
-1. **Validação de Data**: Não permite agendamento de transferências com data anterior à data atual
-2. **Verificação de Dia Útil**: Valida se a data da transferência é dia útil bancário (praça Brasil)
-3. **Validação de Horário**: Verifica se a transferência está dentro do horário permitido (02:00 às 22:30)
-4. **Agendamento Automático**: Se a data não for dia útil ou estiver fora do horário, agenda automaticamente para o próximo dia útil
-5. **Validação de Contas**: Valida dados de conta remetente e favorecido (banco, agência, conta)
-6. **Crítica de Saldo**: Valida saldo disponível para transferência
-7. **Tipos de Transferência**: Suporta diferentes tipos de transação (código de produto 171, sistema 1)
-8. **Validação de Favorecido**: Verifica dados do favorecido incluindo CPF/CNPJ e nome
+### 5. Principais Regras de Negócio
+- Validação de transferência entre contas com base em dias úteis e horários permitidos.
+- Integração com sistemas legados para verificar saldo e agendamento de transferências.
+- Retorno de erros de negócio específicos para condições inválidas de transferência.
 
-## 6. Relação entre Entidades
+### 6. Relação entre Entidades
+- **CalendarioDTO**: Representa informações de calendário, como data de entrada e praça.
+- **ContaCorrenteDTO**: Representa informações de conta corrente, como banco e número da conta.
+- **OperacaoTransferenciaTEFDTO**: Detalhes da operação de transferência, incluindo remetente e favorecido.
+- **ValidarTEFDTO**: Dados para validação de transferência TEF, incluindo informações de contas e transação.
 
-**ValidarTEFDTO** (Entidade principal de entrada)
-- Contém: ContaCorrenteDTO (remetente), ContaCorrenteDTO (favorecido)
-- Relaciona-se com: CalendarioDTO (para validação de data)
+### 7. Estruturas de Banco de Dados Lidas
+Não se aplica.
 
-**ContaCorrenteDTO**
-- Atributos: codigoBanco, numeroContaCorrente
+### 8. Estruturas de Banco de Dados Atualizadas
+Não se aplica.
 
-**OperacaoTransferenciaTEFDTO** (Entidade de saída)
-- Contém dados completos da transferência validada
-- Inclui informações de remetente e favorecido expandidas
+### 9. Filas Lidas
+Não se aplica.
 
-**CalendarioDTO**
-- Usado para validação de dias úteis
-- Relaciona-se com ValidacaoDataUtilDTO
+### 10. Filas Geradas
+Não se aplica.
 
-**ValidacaoDataUtilDTO**
-- Resultado da validação de dia útil
-- Contém flags: isDiaUtil, isForaHorario, isHoje
+### 11. Integrações Externas
+- Integração com sistemas legados via REST para validação de dias úteis e agendamentos.
+- Utilização de JWT para autenticação e autorização.
 
-## 7. Estruturas de Banco de Dados Lidas
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
-não se aplica
+**Justificativa:** O código é bem estruturado, utilizando boas práticas de programação como injeção de dependências e separação de responsabilidades. A documentação via Swagger facilita a compreensão das APIs. No entanto, poderia haver uma melhor organização dos pacotes para aumentar a clareza.
 
-## 8. Estruturas de Banco de Dados Atualizadas
-
-não se aplica
-
-## 9. Arquivos Lidos e Gravados
-
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| application.yml | leitura | Spring Boot | Arquivo de configuração da aplicação com profiles (local, des, qa, uat, prd) |
-| logback-spring.xml | leitura | Logback | Configuração de logging estruturado por ambiente |
-| sboot-ccbd-base-orch-transf-val-tef.yaml | leitura | Swagger Codegen | Contrato OpenAPI para geração de código |
-
-## 10. Filas Lidas
-
-não se aplica
-
-## 11. Filas Geradas
-
-não se aplica
-
-## 12. Integrações Externas
-
-| Sistema/Serviço | Tipo | Descrição |
-|-----------------|------|-----------|
-| **EJB Legado - TransferenciaServices** | REST/JSON-RPC | Serviço legado para crítica de transferência entre contas com validação de saldo (método: CCPagamento.Transferencia.criticarTransferenciaEntreContasBancoValidarSaldo) |
-| **EJB Legado - SCalendarioEJB** | REST/JSON-RPC | Serviço de calendário bancário para verificação de dias úteis (métodos: verificaDiaUtil, proximoDiaUtil) |
-| **EJB Legado - Agendamento** | REST/JSON-RPC | Serviço para crítica de agendamento de transferências (método: CCAgendamento.Transferencia.criticarAgendamentoEntreContasBanco) |
-| **OAuth2/JWT Provider** | HTTPS | Servidor de autenticação para validação de tokens JWT (jwks.json) |
-| **ESB Adapter** | REST | Adaptador de integração com sistemas legados (URLs variam por ambiente) |
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota: 7/10**
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Boa separação de responsabilidades com módulos domain e application
-- Uso adequado de padrões como Repository e Service
-- Implementação de orquestração com Apache Camel bem estruturada
-- Configuração externalizada por ambiente
-- Uso de Lombok para reduzir boilerplate
-- Documentação via OpenAPI/Swagger
-- Implementação de segurança com OAuth2/JWT
-- Logs estruturados
-
-**Pontos de Melhoria:**
-- Tratamento de exceções genérico em alguns pontos (catch Exception)
-- Valores hardcoded em algumas classes (ex: cdProduto=171, cdSistema=1)
-- Falta de validações de entrada mais robustas
-- Comentários de código desnecessários ou incompletos
-- Algumas classes com responsabilidades que poderiam ser melhor distribuídas
-- Falta de testes unitários enviados para análise
-- Conversões de data repetidas em múltiplos locais (poderia ser centralizado)
-- Nomenclatura de variáveis em português misturada com inglês
-
-## 14. Observações Relevantes
-
-1. **Arquitetura Multi-módulo**: O projeto está dividido em módulos `domain` (lógica de negócio) e `application` (exposição REST), seguindo boas práticas de separação de camadas
-
-2. **Integração Legado**: Utiliza um padrão JSON-RPC customizado para comunicação com EJBs legados através de um ESB Adapter
-
-3. **Ambientes**: Suporta múltiplos ambientes (local, des, qa, uat, prd) com configurações específicas via ConfigMaps e Secrets
-
-4. **Observabilidade**: Implementa health checks, métricas Prometheus e logs estruturados em JSON
-
-5. **Segurança**: Requer autenticação OAuth2 com scope 'openid' para acesso aos endpoints
-
-6. **Horário de Operação**: Sistema opera com janela de horário específica (02:00 às 22:30) para transferências imediatas
-
-7. **Praça Bancária**: Utiliza praça "NC" (Brasil) como padrão para validação de calendário
-
-8. **Container**: Utiliza imagem AdoptOpenJDK 11 com OpenJ9 em Alpine Linux para otimização de recursos
-
-9. **Pipeline**: Integrado com Jenkins para CI/CD com propriedades específicas de build
-
-10. **Auditoria**: Implementa trilha de auditoria através de biblioteca específica do Banco Votorantim
+### 13. Observações Relevantes
+- O sistema utiliza Apache Camel para orquestração de rotas, o que facilita a integração com sistemas externos.
+- A configuração do sistema é altamente parametrizada, permitindo fácil adaptação a diferentes ambientes de execução.
+```

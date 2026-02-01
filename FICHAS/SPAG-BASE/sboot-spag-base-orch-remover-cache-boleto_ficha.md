@@ -1,174 +1,86 @@
-# Ficha Técnica do Sistema
+```markdown
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
+### 1. Descrição Geral
+O sistema "Remover Cache Boleto" é um serviço stateless desenvolvido para remover o cache de boletos. Ele utiliza o framework Spring Boot e integra-se com o Google Cloud Pub/Sub para processamento de mensagens. O sistema expõe endpoints REST para interagir com o serviço de remoção de cache de boletos.
 
-Sistema orquestrador responsável por remover cache de boletos no contexto de baixa de boletos. O sistema consome mensagens de filas do Google Cloud Pub/Sub (solicitações de baixa e contingência), busca informações do boleto em sistemas externos (SPAG e PGFT), valida o código de barras e solicita a remoção do cache através de um serviço de consulta de boletos.
+### 2. Principais Classes e Responsabilidades
+- **AppProperties**: Configurações de propriedades da aplicação.
+- **OpenApiConfiguration**: Configuração do Swagger para documentação de APIs.
+- **PubSubInputChannelConfiguration**: Configuração de canais de entrada para integração com Google Cloud Pub/Sub.
+- **RemoverCacheBoletoConfiguration**: Configuração de beans e serviços relacionados à remoção de cache de boletos.
+- **HttpUtil**: Utilitário para criação de headers HTTP.
+- **BoletoRepositoryImpl**: Implementação do repositório para obtenção de detalhes de pagamento de boletos.
+- **RemoverCacheBoletoRepositoryImpl**: Implementação do repositório para remoção de cache de boletos.
+- **RemoverCacheBoletoMapper**: Mapeamento de objetos relacionados ao boleto.
+- **RemoverCacheBoletoController**: Controlador REST para o serviço de remoção de cache de boletos.
+- **RemoverCacheBoletoSubscriber**: Subscriber para mensagens do Pub/Sub relacionadas à remoção de cache de boletos.
+- **LoggerHelper**: Utilitário para sanitização de mensagens de log.
+- **Application**: Classe principal para inicialização da aplicação Spring Boot.
+- **BuscarBoletoProcessor**: Processador Camel para busca de boletos.
+- **RemoverCacheBoletoInitProcessor**: Processador Camel para inicialização de propriedades de controle de mensagens.
+- **VerificaCodBarrasProcessor**: Processador Camel para verificação de código de barras de boletos.
+- **RemoverCacheBoletoRouter**: Router Camel para orquestração do fluxo de remoção de cache de boletos.
+- **CamelContextWrapper**: Wrapper para o contexto Camel.
+- **DadosBoleto**: Classe de domínio representando os dados de um boleto.
+- **Mensagem**: Classe de domínio representando uma mensagem de controle.
+- **RemoverCacheBoletoException**: Exceção de domínio para erros relacionados à remoção de cache de boletos.
+- **BoletoRepository**: Interface de repositório para operações relacionadas a boletos.
+- **RemoverCacheBoletoRepository**: Interface de repositório para remoção de cache de boletos.
+- **RemoverCacheBoletoService**: Serviço de domínio para remoção de cache de boletos.
 
----
+### 3. Tecnologias Utilizadas
+- Java 11
+- Spring Boot
+- Spring Cloud GCP
+- Apache Camel
+- Swagger
+- Google Cloud Pub/Sub
+- Prometheus
+- Grafana
+- Docker
 
-## 2. Principais Classes e Responsabilidades
+### 4. Principais Endpoints REST
+| Método | Endpoint                     | Classe Controladora             | Descrição                     |
+|--------|------------------------------|---------------------------------|-------------------------------|
+| GET    | /v1/remover-cache-boleto     | RemoverCacheBoletoController    | Endpoint para remoção de cache de boletos. |
+| GET    | /v1/test                     | RemoverCacheBoletoController    | Endpoint de teste.            |
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| `RemoverCacheBoletoService` | Serviço de domínio que orquestra o fluxo de remoção de cache através do Apache Camel |
-| `RemoverCacheBoletoRouter` | Define a rota Camel com os processadores e integrações necessários |
-| `RemoverCacheBoletoSubscriber` | Subscriber que consome mensagens das filas Pub/Sub |
-| `BoletoRepositoryImpl` | Implementação de repositório para buscar dados de boleto no SPAG e PGFT |
-| `RemoverCacheBoletoRepositoryImpl` | Implementação de repositório para chamar o serviço de remoção de cache |
-| `RemoverCacheBoletoInitProcessor` | Processador Camel que inicializa o fluxo extraindo dados da mensagem |
-| `BuscarBoletoProcessor` | Processador Camel que verifica se o boleto foi encontrado |
-| `VerificaCodBarrasProcessor` | Processador Camel que valida e formata o código de barras |
-| `AppProperties` | Classe de configuração com propriedades da aplicação |
-| `CamelContextWrapper` | Wrapper para gerenciar o contexto do Apache Camel |
+### 5. Principais Regras de Negócio
+- Remoção de cache de boletos com base no código de barras.
+- Validação de dados de boletos antes da remoção de cache.
+- Integração com serviços externos para obtenção de detalhes de pagamento de boletos.
 
----
+### 6. Relação entre Entidades
+- **DadosBoleto**: Representa os dados de um boleto, incluindo valor, data de movimento, status, e código de barras.
+- **Mensagem**: Representa uma mensagem de controle, incluindo código de mensagem e número de controle de parte.
 
-## 3. Tecnologias Utilizadas
+### 7. Estruturas de Banco de Dados Lidas
+Não se aplica.
 
-- **Spring Boot 2.x** (framework base)
-- **Apache Camel 3.22.4** (orquestração e integração)
-- **Google Cloud Pub/Sub** (mensageria)
-- **Spring Cloud GCP 3.9.11** (integração com GCP)
-- **Micrometer/Prometheus** (métricas)
-- **Swagger/OpenAPI 3.0.0** (documentação de API)
-- **Logback** (logging)
-- **HikariCP** (pool de conexões)
-- **RestTemplate** (cliente HTTP)
-- **JUnit 5 + Mockito** (testes)
-- **Maven** (build)
-- **Docker** (containerização)
-- **Grafana + Prometheus** (observabilidade)
+### 8. Estruturas de Banco de Dados Atualizadas
+Não se aplica.
 
----
+### 9. Filas Lidas
+- **solicitacaoBaixaBoletoInputChannel**: Canal de entrada para mensagens de solicitação de baixa de boletos.
+- **contingenciaBaixaBoletoInputChannel**: Canal de entrada para mensagens de contingência de baixa de boletos.
 
-## 4. Principais Endpoints REST
+### 10. Filas Geradas
+Não se aplica.
 
-| Método | Endpoint | Classe Controladora | Descrição |
-|--------|----------|---------------------|-----------|
-| N/A | N/A | `RemoverCacheBoletoController` | Controlador vazio, sem endpoints REST implementados |
+### 11. Integrações Externas
+- Integração com serviços SPAG para obtenção de detalhes de pagamento de boletos.
+- Integração com Google Cloud Pub/Sub para processamento de mensagens.
 
-**Observação:** O sistema funciona primariamente através de consumo de mensagens de filas Pub/Sub, não expondo endpoints REST para operações de negócio.
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
----
+**Justificativa:** O código está bem estruturado e utiliza boas práticas de desenvolvimento, como injeção de dependências e uso de interfaces para abstração. A documentação e configuração de Swagger são adequadas, facilitando a compreensão dos endpoints disponíveis. No entanto, algumas classes de teste estão incompletas, o que pode impactar na cobertura de testes.
 
-## 5. Principais Regras de Negócio
-
-1. **Busca de Boleto**: Tenta buscar informações do boleto primeiro no SPAG (sistema de pagamento). Se não encontrar, busca no PGFT (sistema de registro de boleto).
-
-2. **Validação de Código de Barras**: Valida se o código de barras/linha digitável existe e não está vazio. Se a linha digitável tiver mais de 44 caracteres, realiza conversão para código de barras padrão.
-
-3. **Remoção de Cache**: Após obter e validar o código de barras, solicita a remoção do cache através do serviço de consulta de boletos.
-
-4. **Tratamento de Erros**: Captura exceções específicas (`RemoverCacheBoletoException`) e retorna mensagem de erro genérica em caso de falha não crítica.
-
-5. **Processamento Assíncrono**: Consome mensagens de duas filas distintas (solicitação e contingência) e realiza ACK manual após processamento.
-
----
-
-## 6. Relação entre Entidades
-
-**Entidades principais:**
-
-- **Mensagem**: Representa a mensagem recebida da fila Pub/Sub
-  - Atributos: `codMsg`, `numCtrlPart`, `ispbPartRecbdrPrincipal`
-  
-- **DadosBoleto**: Representa os dados do boleto obtidos dos sistemas externos
-  - Atributos: `valor`, `dataMovimento`, `dataLancamento`, `status`, `nuCodigoBarraDigitacao`, `flBoletoBaixa`
-
-**Relacionamento:**
-- Uma `Mensagem` contém o `numCtrlPart` (código de lançamento) que é usado para buscar um `DadosBoleto`
-- O `DadosBoleto` contém o `nuCodigoBarraDigitacao` necessário para remover o cache
-
----
-
-## 7. Estruturas de Banco de Dados Lidas
-
-não se aplica
+### 13. Observações Relevantes
+- O sistema utiliza o Prometheus e Grafana para monitoramento e métricas.
+- A configuração de segurança e autenticação é realizada através de OAuth2.
+- O projeto está configurado para ser executado em ambientes de nuvem, utilizando Google Cloud Platform.
 
 ---
-
-## 8. Estruturas de Banco de Dados Atualizadas
-
-não se aplica
-
----
-
-## 9. Arquivos Lidos e Gravados
-
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| logback-spring.xml | leitura | `/usr/etc/log` (runtime) | Arquivo de configuração de logs |
-| application.yml | leitura | `src/main/resources` | Arquivo de configuração da aplicação |
-
----
-
-## 10. Filas Lidas
-
-- **business-spag-base-baixa-boleto-remover-cache-sub**: Fila principal para solicitações de remoção de cache de boleto após baixa
-- **business-spag-base-contingencia-baixa-boleto-remover-cache-sub**: Fila de contingência para solicitações de remoção de cache
-
-Ambas as filas são do Google Cloud Pub/Sub e são consumidas através do Spring Cloud GCP.
-
----
-
-## 11. Filas Geradas
-
-não se aplica
-
----
-
-## 12. Integrações Externas
-
-| Sistema/Serviço | Tipo | Descrição |
-|-----------------|------|-----------|
-| SPAG (sboot-spag-base-atom-pagamento) | REST API | Busca detalhes de pagamento através do endpoint `/v1/pagamento/detalhado/{cdLancamento}` |
-| PGFT (sboot-spag-base-atom-registra-boleto) | REST API | Busca dados de boleto através do endpoint `/v1/obter-dados-boleto/{cdLancamentoPgft}` |
-| Consulta Boleto (springboot-spag-base-consulta-boleto) | REST API | Remove cache de boleto através do endpoint `/v1/boleto/removerCacheBoleto/{nuCodBarras}` |
-| Google Cloud Pub/Sub | Mensageria | Consome mensagens de duas filas (solicitação e contingência) |
-| API Gateway BV | OAuth2 | Autenticação para chamadas aos serviços internos |
-
----
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota:** 7/10
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Boa separação de responsabilidades com arquitetura em camadas (domain, application)
-- Uso adequado do Apache Camel para orquestração de fluxos
-- Testes unitários presentes para as principais classes
-- Configuração adequada de observabilidade (Prometheus, Grafana)
-- Uso de padrões de projeto (Repository, Service)
-- Documentação OpenAPI presente
-
-**Pontos de Melhoria:**
-- Tratamento de exceções genérico em alguns pontos (catch de `Exception`)
-- Logs com informações sensíveis (códigos de barras) sem sanitização consistente
-- Falta de validação mais robusta de entrada de dados
-- Alguns métodos com múltiplas responsabilidades (ex: `receberComandoMessage`)
-- Configurações de timeout e retry não explicitamente definidas
-- Falta de circuit breaker para chamadas externas
-- Código de testes com alguns `lenient()` desnecessários
-- Ausência de testes de integração mais abrangentes
-
----
-
-## 14. Observações Relevantes
-
-1. **Autenticação**: O sistema utiliza OAuth2 através do API Gateway do Banco Votorantim para autenticar chamadas aos serviços internos.
-
-2. **Ambientes**: Suporta múltiplos ambientes (local, des, qa, uat, prd) com configurações específicas por ambiente.
-
-3. **Monitoramento**: Possui dashboards Grafana pré-configurados para monitoramento de métricas JVM, HTTP, HikariCP e logs.
-
-4. **Contingência**: Possui fila separada para processamento de contingência, garantindo resiliência.
-
-5. **ACK Manual**: Utiliza ACK manual nas mensagens do Pub/Sub, garantindo que mensagens só sejam confirmadas após processamento completo.
-
-6. **Timeout**: Configuração de timeout de 30 segundos para chamadas ao serviço de consulta de boletos.
-
-7. **Credenciais**: Utiliza cofre de senhas para armazenamento seguro de credenciais (client_id, client_secret, passwords).
-
-8. **Plataforma**: Projetado para execução em Google Cloud Platform (GCP) com Kubernetes.
+```

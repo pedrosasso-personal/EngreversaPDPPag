@@ -1,218 +1,155 @@
-# Ficha Técnica do Sistema
+```markdown
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
+### 1. Descrição Geral
+O sistema é um serviço de orquestração para descomissionamento do NCCS, disponibilizando funcionalidades de consulta de titularidade de conta, tipo de transações, agências e outras configurações. Ele é desenvolvido em Java com Spring Boot e utiliza uma arquitetura hexagonal.
 
-O **sboot-ccbd-base-acl-conta-corrente** é um componente ACL (Anti-Corruption Layer) desenvolvido em Java com Spring Boot, destinado ao descomissionamento do sistema legado NCCS (Novo Core de Conta Corrente). Sua função principal é disponibilizar funcionalidades de consulta de titularidade de contas, tipos de transações, agências e outras configurações relacionadas a contas correntes, atuando como uma camada de transição entre sistemas legados e novos.
+### 2. Principais Classes e Responsabilidades
+- **Application**: Classe principal que inicia a aplicação Spring Boot.
+- **GlobalExceptionHandler**: Trata exceções globais no contexto de controladores REST.
+- **HttpClientErrorExceptionHandler**: Manipula exceções de erro de cliente HTTP.
+- **AccountClosureRequestRepresentationMapper**: Mapeia representações de requisições de encerramento de conta.
+- **AccountHolderRepresentationMapper**: Mapeia representações de titulares de conta.
+- **AccountHoldersResponseMapper**: Mapeia respostas de titulares de conta.
+- **AccountIdRepresentationMapper**: Mapeia representações de identificadores de conta.
+- **AccountRepresentationMapper**: Mapeia representações de contas.
+- **BranchDetailResponseMapper**: Mapeia respostas de detalhes de agência.
+- **HolderRepresentationMapper**: Mapeia representações de titulares.
+- **PaginationRepresentationMapper**: Mapeia representações de paginação.
+- **PersonRepresentationMapper**: Mapeia representações de pessoas.
+- **TransactionApiDelegateImplMapper**: Mapeia implementações de delegados de API de transações.
+- **TransactionResponseMapper**: Mapeia respostas de transações.
+- **AccountBranchApiDelegateImpl**: Implementação de delegados de API para detalhes de agência.
+- **AccountHoldersApiDelegateImpl**: Implementação de delegados de API para titulares de conta.
+- **TransactionApiDelegateImpl**: Implementação de delegados de API para tipos de transações.
+- **RequestDateControlMapper**: Mapeia controles de data de requisição.
+- **ResponseControlDateMappper**: Mapeia respostas de controle de data.
+- **ResponseTransactionTypeMapper**: Mapeia tipos de transações de resposta.
+- **SearchDateControl**: Serviço para buscar controle de data.
+- **SearchTransactionTypeWithFilter**: Serviço para buscar tipos de transações com filtro.
+- **SearchTransactionTypeWithId**: Serviço para buscar tipos de transações por ID.
+- **AccountClosureRequestMapper**: Mapeia requisições de encerramento de conta.
+- **AccountHolderMapper**: Mapeia titulares de conta.
+- **AccountIdMapper**: Mapeia identificadores de conta.
+- **AccountMapper**: Mapeia contas.
+- **BasicRecordInformationMapper**: Mapeia informações básicas de registros.
+- **HolderMapper**: Mapeia titulares.
+- **PaginationMapper**: Mapeia paginação.
+- **GetAccountById**: Serviço para obter conta por ID.
+- **GetAccountByModalityList**: Serviço para obter contas por lista de modalidades.
+- **GetAccountIdByPerson**: Serviço para obter ID de conta por pessoa.
+- **GetHolderByAccountId**: Serviço para obter titular por ID de conta.
+- **GetPersonIdByTaxIdNumber**: Serviço para obter ID de pessoa por número de CPF/CNPJ.
+- **SearchBranchDomainMapper**: Mapeia domínios de agências.
+- **SearchBranchDomain**: Serviço para buscar domínios de agências.
+- **BranchDetailMapper**: Mapeia detalhes de agência.
+- **Validator**: Interface para validação.
+- **Get**: Interface para execução de operações de obtenção.
+- **AccountIdValidator**: Validador de identificadores de conta.
+- **AccountNumberValidator**: Validador de números de conta.
+- **BankIdValidator**: Validador de IDs de banco.
+- **TaxIdNumberValidator**: Validador de números de CPF/CNPJ.
+- **GetAccountHolders**: Caso de uso para obter titulares de conta.
+- **GetAccountHoldersByAccount**: Caso de uso para obter titulares de conta por conta.
+- **GetAccountHoldersByModality**: Caso de uso para obter titulares de conta por modalidade.
+- **GetAccountHoldersByTaxIdNumber**: Caso de uso para obter titulares de conta por CPF/CNPJ.
+- **SearchBranchDetail**: Caso de uso para buscar detalhes de agência.
+- **SearchTransactionType**: Caso de uso para buscar tipos de transações.
+- **AccountOwnershipType**: Enum para tipos de propriedade de conta.
+- **HolderType**: Enum para tipos de titular.
+- **OperationType**: Enum para tipos de operação.
+- **ErrorCode**: Interface para códigos de erro.
+- **InvalidParameterException**: Exceção para parâmetros inválidos.
+- **NotFoundException**: Exceção para recursos não encontrados.
+- **Account**: Modelo de conta.
+- **AccountClosureRequest**: Modelo de requisição de encerramento de conta.
+- **AccountHolder**: Modelo de titular de conta.
+- **AccountHolderRequest**: Modelo de requisição de titular de conta.
+- **AccountId**: Modelo de identificador de conta.
+- **BasicRecordInformation**: Interface para informações básicas de registros.
+- **FilterCheck**: Modelo para verificação de filtros.
+- **Holder**: Modelo de titular.
+- **ListAccountHolderPaginated**: Modelo de lista paginada de titulares de conta.
+- **ListAccountPaginated**: Modelo de lista paginada de contas.
+- **Pagination**: Modelo de paginação.
+- **Person**: Modelo de pessoa.
+- **RequestAccountByBank**: Modelo de requisição de conta por banco.
+- **RequestAccountByPerson**: Modelo de requisição de conta por pessoa.
+- **RequestAccountModalityByBankPaginated**: Modelo de requisição de modalidade de conta por banco paginada.
+- **RequestBranchDetail**: Modelo de requisição de detalhes de agência.
+- **RequestDateControl**: Modelo de controle de data de requisição.
+- **RequestPersonByBank**: Modelo de requisição de pessoa por banco.
+- **RequestTransactionType**: Modelo de requisição de tipo de transação.
+- **ResponseBranchDetail**: Modelo de resposta de detalhes de agência.
+- **ResponseBranchDomain**: Modelo de resposta de domínio de agência.
+- **ResponseControlDate**: Modelo de resposta de controle de data.
+- **ResponseTransactionType**: Modelo de resposta de tipo de transação.
+- **TransactionCategory**: Modelo de categoria de transação.
+- **ApiConfiguration**: Configuração de APIs.
+- **BooleanConverter**: Conversor de valores booleanos.
+- **DateTimeConverter**: Conversor de valores de data e hora.
+- **ApiProperties**: Propriedades de configuração de API.
+- **OAuth2ClientConfig**: Configuração de cliente OAuth2.
+- **OAuth2ClientHttpRequestInterceptorBv**: Interceptor de requisições HTTP para OAuth2.
 
-O sistema segue a arquitetura hexagonal (Ports & Adapters), promovendo separação clara entre lógica de negócio e infraestrutura, facilitando manutenibilidade e evolução.
+### 3. Tecnologias Utilizadas
+- Java 21
+- Spring Boot
+- Maven
+- Logback
+- OAuth2
+- OpenAPI
 
----
-
-## 2. Principais Classes e Responsabilidades
-
-| Classe/Componente | Responsabilidade |
-|-------------------|------------------|
-| `Application.java` | Classe principal que inicializa a aplicação Spring Boot |
-| `AccountHoldersApiDelegateImpl` | Controller REST para consulta de titularidade de contas |
-| `AccountBranchApiDelegateImpl` | Controller REST para consulta de detalhes de agências |
-| `TransactionApiDelegateImpl` | Controller REST para consulta de tipos de transações |
-| `GetAccountHolders` | Caso de uso principal que orquestra consultas de titularidade |
-| `GetAccountHoldersByAccount` | Caso de uso para buscar titulares por conta específica |
-| `GetAccountHoldersByModality` | Caso de uso para buscar titulares por modalidade de conta |
-| `GetAccountHoldersByTaxIdNumber` | Caso de uso para buscar titulares por CPF/CNPJ |
-| `SearchBranchDetail` | Caso de uso para buscar detalhes de agências |
-| `SearchTransactionType` | Caso de uso para buscar tipos de transações |
-| `GlobalExceptionHandler` | Tratamento centralizado de exceções |
-| `OAuth2ClientConfig` | Configuração de segurança OAuth2 |
-| Diversos Mappers | Conversão entre DTOs, representações e modelos de domínio |
-
----
-
-## 3. Tecnologias Utilizadas
-
-- **Java 21** (com Virtual Threads habilitadas)
-- **Spring Boot 3.4.4**
-- **Spring Security 6.4.1** (OAuth2 Client e Resource Server)
-- **Spring Web** (com Undertow como servidor de aplicação)
-- **MapStruct** (para mapeamento de objetos)
-- **OpenAPI Generator** (geração de clientes REST a partir de especificações Swagger/OpenAPI)
-- **Logback** (com formato JSON para logs)
-- **Maven 3.8+** (gerenciamento de dependências)
-- **Docker** (containerização)
-- **Google Cloud Platform** (infraestrutura)
-- **Atlante Framework** (framework corporativo do Banco Votorantim)
-
----
-
-## 4. Principais Endpoints REST
-
+### 4. Principais Endpoints REST
 | Método | Endpoint | Classe Controladora | Descrição |
 |--------|----------|---------------------|-----------|
-| GET | `/v1/digital-bank/{bank}/account-holders` | `AccountHoldersApiDelegateImpl` | Consulta contas e titulares por diversos filtros (número de conta, CPF/CNPJ, modalidade) |
-| GET | `/v1/digital-bank/{bank}/branchs/{branchNumber}` | `AccountBranchApiDelegateImpl` | Consulta detalhes de uma agência específica |
-| GET | `/v1/digital-bank/{bank}/transaction-types/{id}` | `TransactionApiDelegateImpl` | Consulta tipo de transação por ID |
-| GET | `/v1/digital-bank/{bank}/transaction-types` | `TransactionApiDelegateImpl` | Consulta tipos de transações com filtros opcionais |
+| GET | /v1/digital-bank/{bank}/account-holders | AccountHoldersApiDelegateImpl | Obtém todas as contas e titulares por filtro. |
+| GET | /v1/digital-bank/{bank}/branchs/{branchNumber} | AccountBranchApiDelegateImpl | Busca detalhes de agência. |
+| GET | /v1/digital-bank/{bank}/transaction-types/{id} | TransactionApiDelegateImpl | Busca tipo de transação por ID. |
+| GET | /v1/digital-bank/{bank}/transaction-types | TransactionApiDelegateImpl | Busca tipos de transação. |
 
----
+### 5. Principais Regras de Negócio
+- Validação de parâmetros de entrada para operações de busca.
+- Mapeamento de entidades de domínio para representações de API.
+- Tratamento de exceções globais e específicas de cliente HTTP.
+- Integração com serviços externos para obtenção de dados de conta e transação.
 
-## 5. Principais Regras de Negócio
+### 6. Relação entre Entidades
+- **Account** possui um **AccountId** e pode ter um **AccountClosureRequest**.
+- **AccountHolder** possui uma **Account** e uma coleção de **Holder**.
+- **Holder** possui uma **Person** e um **HolderType**.
+- **TransactionCategory** está associada a **ResponseTransactionType**.
 
-1. **Validação de Parâmetros de Entrada**: O sistema valida obrigatoriamente o `bankId` (deve ser maior que zero) e outros parâmetros conforme o tipo de consulta.
+### 7. Estruturas de Banco de Dados Lidas
+| Nome da Tabela/View/Coleção | Tipo (tabela/view/coleção) | Operação (SELECT/READ) | Breve Descrição |
+|-----------------------------|----------------------------|------------------------|-----------------|
+| DBGlobal.TbBanco | tabela | SELECT | Tabela de bancos. |
+| DBGlobal.TbTipoConta | tabela | SELECT | Tabela de tipos de conta. |
+| DBGlobal.TbAgencia | tabela | SELECT | Tabela de agências. |
+| DBContaCorrente.TbMotivoEncerramentoConta | tabela | SELECT | Tabela de motivos de encerramento de conta. |
+| DBContaCorrente.TbModalidade | tabela | SELECT | Tabela de modalidades de conta. |
 
-2. **Filtros Mutuamente Exclusivos**: Na consulta de titularidade, apenas um filtro pode ser utilizado por vez:
-   - Por identificação completa da conta (número, tipo, agência)
-   - Por CPF/CNPJ do titular
-   - Por modalidade de conta
+### 8. Estruturas de Banco de Dados Atualizadas
+| Nome da Tabela/View/Coleção | Tipo (tabela/view/coleção) | Operação (INSERT/UPDATE/DELETE) | Breve Descrição |
+|-----------------------------|----------------------------|-------------------------------|-----------------|
+| Não se aplica | | | |
 
-3. **Paginação**: Consultas por modalidade suportam paginação com `pageSize` e `cursorRef`.
+### 9. Filas Lidas
+Não se aplica
 
-4. **Enriquecimento de Dados**: O sistema busca informações complementares de múltiplas fontes (dados cadastrais, contas, agências) e as consolida.
+### 10. Filas Geradas
+Não se aplica
 
-5. **Processamento Assíncrono**: Utiliza Virtual Threads e ExecutorService para buscar contas de forma paralela quando consultando por CPF/CNPJ.
+### 11. Integrações Externas
+- **sboot-glob-base-atom-cliente-dados-cadastrais**: Serviço para dados cadastrais de clientes.
+- **sboot-glob-base-atom-lista-bancos**: Serviço para lista de bancos.
+- **sboot-ccbd-base-atom-conta-corrente-dominio**: Serviço para operações nas tabelas de domínio do conta-corrente.
 
-6. **Mapeamento de Tipos de Titularidade**: Define tipos de titularidade conforme padrão ISO20022 (SIGL - Single Owner, JOIT - Joint Account, CORP - Corporation).
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
-7. **Conversão de Formatos**: Converte datas entre formatos (LocalDate, LocalDateTime, OffsetDateTime) e booleanos entre representações (S/N para true/false).
+**Justificativa:** O código é bem estruturado e segue boas práticas de desenvolvimento, como a utilização de uma arquitetura hexagonal. A documentação está presente e os mapeamentos são claros. No entanto, poderia haver uma maior cobertura de testes automatizados.
 
----
-
-## 6. Relação entre Entidades
-
-**Principais Entidades e Relacionamentos:**
-
-- **Account** (Conta): Entidade central contendo:
-  - `AccountId` (identificação: banco, número, tipo, agência)
-  - `BasicRecordInformation` para modalidade, status, motivos de bloqueio
-  - `AccountClosureRequest` (solicitação de encerramento)
-  - Flags booleanas (isNopAccount, isTaxCpmfFree, etc.)
-
-- **AccountHolder** (Titular de Conta):
-  - Relacionamento 1:N com `Holder` (titulares)
-  - Relacionamento 1:1 com `Account`
-
-- **Holder** (Titular):
-  - Relacionamento 1:1 com `Person`
-  - Tipo de titularidade (HolderType)
-
-- **Person** (Pessoa):
-  - Dados básicos: id, nome, CPF/CNPJ
-
-- **ResponseBranchDetail** (Detalhes da Agência):
-  - Informações da agência e datas contábeis
-
-- **ResponseTransactionType** (Tipo de Transação):
-  - Informações sobre tipos de transações e categorias
-
-**Relacionamento UML Textual:**
+### 13. Observações Relevantes
+O sistema utiliza uma arquitetura hexagonal, o que facilita a manutenção e evolução do código. A integração com serviços externos é feita através de clientes REST gerados a partir de especificações OpenAPI.
 ```
-AccountHolder "1" --> "1" Account
-AccountHolder "1" --> "*" Holder
-Holder "1" --> "1" Person
-Account "1" --> "1" AccountId
-Account "1" --> "0..1" AccountClosureRequest
-Account "1" --> "*" BasicRecordInformation
-```
-
----
-
-## 7. Estruturas de Banco de Dados Lidas
-
-| Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
-|-----------------------------|------|----------|-----------------|
-| DBGlobal.TbBanco | tabela | SELECT | Informações de bancos |
-| DBGlobal.TbAgencia | tabela | SELECT | Informações de agências |
-| DBGlobal.TbTipoConta | tabela | SELECT | Tipos de conta (CC, CT, IF) |
-| DBContaCorrente.TbModalidade | tabela | SELECT | Modalidades de conta corrente |
-| DBContaCorrente.TbMotivoEncerramentoConta | tabela | SELECT | Motivos de encerramento de conta |
-| Dados de Pessoa (via API) | API | READ | Informações cadastrais de pessoas |
-| Dados de Conta Corrente (via API) | API | READ | Informações de contas correntes |
-
----
-
-## 8. Estruturas de Banco de Dados Atualizadas
-
-não se aplica
-
----
-
-## 9. Arquivos Lidos e Gravados
-
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| application.yml | leitura | Spring Boot | Configurações da aplicação |
-| logback-spring.xml | leitura | Logback | Configuração de logs (diferentes por ambiente) |
-| openapi.yaml | leitura | OpenAPI Generator | Especificação da API REST |
-| sboot-ccbd-base-atom-conta-corrente-dominio.yaml | leitura | OpenAPI Generator | Especificação do cliente de conta corrente domínio |
-| sboot-glob-base-atom-cliente-dados-cadastrais.yaml | leitura | OpenAPI Generator | Especificação do cliente de dados cadastrais |
-| sboot-glob-base-atom-lista-bancos.yaml | leitura | OpenAPI Generator | Especificação do cliente de lista de bancos |
-
----
-
-## 10. Filas Lidas
-
-não se aplica
-
----
-
-## 11. Filas Geradas
-
-não se aplica
-
----
-
-## 12. Integrações Externas
-
-| Sistema Externo | Tipo | Descrição |
-|-----------------|------|-----------|
-| sboot-ccbd-base-atom-conta-corrente-dominio | API REST | Consulta informações de contas correntes, tipos de transações e controle de datas |
-| sboot-glob-base-atom-cliente-dados-cadastrais | API REST | Consulta dados cadastrais de pessoas, contas por pessoa, contas por CPF/CNPJ |
-| sboot-glob-base-atom-lista-bancos | API REST | Consulta informações de agências bancárias |
-| OAuth2 Token Provider | API REST | Autenticação e autorização via OAuth2 Client Credentials |
-
----
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota:** 8/10
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Arquitetura hexagonal bem estruturada com clara separação de responsabilidades
-- Uso adequado de padrões como Ports & Adapters, Mappers e DTOs
-- Código limpo com nomenclatura descritiva em inglês
-- Boa cobertura de validações e tratamento de exceções centralizado
-- Uso de tecnologias modernas (Java 21, Virtual Threads, Spring Boot 3.x)
-- Documentação presente (README, comentários em código)
-- Configuração adequada de segurança OAuth2
-
-**Pontos de Melhoria:**
-- Alguns mappers poderiam ter lógica mais simplificada
-- Falta de testes unitários nos arquivos fornecidos (embora existam na estrutura)
-- Algumas classes de domínio poderiam ter validações mais robustas
-- Documentação inline poderia ser mais detalhada em alguns métodos complexos
-- Configurações hardcoded em alguns pontos (poderiam ser externalizadas)
-
----
-
-## 14. Observações Relevantes
-
-1. **Componente de Transição**: Este é um componente temporário destinado ao descomissionamento do sistema legado NCCS, portanto sua arquitetura prioriza integração e adaptação.
-
-2. **Segurança**: O sistema utiliza OAuth2 com JWT para autenticação e autorização, integrando-se ao API Gateway corporativo.
-
-3. **Ambientes**: Possui configurações específicas para ambientes DES, UAT e PRD, com diferentes endpoints e configurações de log.
-
-4. **Monitoramento**: Expõe endpoints Actuator na porta 9090 para health checks e métricas.
-
-5. **Performance**: Utiliza Virtual Threads do Java 21 para melhor performance em operações I/O intensivas e processamento paralelo de consultas.
-
-6. **Containerização**: Preparado para execução em containers Docker com imagem base corporativa.
-
-7. **Infraestrutura**: Configurado para execução na Google Cloud Platform (GCP) com Kubernetes.
-
-8. **Logs**: Configuração de logs em formato JSON para facilitar integração com ferramentas de observabilidade.
-
-9. **Geração de Código**: Utiliza OpenAPI Generator para gerar clientes REST automaticamente a partir de especificações Swagger, reduzindo código boilerplate.
-
-10. **Framework Corporativo**: Integra-se ao framework Atlante do Banco Votorantim, seguindo padrões e práticas corporativas.

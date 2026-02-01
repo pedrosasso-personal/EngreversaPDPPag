@@ -1,170 +1,63 @@
-# Ficha Técnica do Sistema
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
-Sistema responsável por processar estornos de pagamentos de boletos (tributos e consumo) realizados via CCBD (Conta Corrente Banco Digital). O sistema consome mensagens de uma fila IBM MQ, efetua transferências de estorno entre contas através de serviços legados (ESB Adapter) e atualiza o status do pagamento em uma API REST de pagamento de boletos.
+### 1. Descrição Geral
+O sistema é um serviço stateless desenvolvido em Java utilizando o framework Spring Boot. Seu objetivo é processar estornos de pagamentos de boletos, integrando-se com sistemas externos para efetuar transferências e atualizações de estorno.
 
----
+### 2. Principais Classes e Responsabilidades
+- **Application**: Classe principal que inicializa o aplicativo Spring Boot.
+- **AppProperties**: Configurações do aplicativo, incluindo credenciais e URLs de serviços externos.
+- **EfetPgmtEstBolConfiguration**: Configuração de beans e integração com JMS e REST.
+- **OpenApiConfiguration**: Configuração do Swagger para documentação de APIs.
+- **AtualizarPgmtEstornoOutboundImpl**: Implementação da interface para atualizar estornos via REST.
+- **EstornoOutboundImpl**: Implementação da interface para processar estornos de boletos.
+- **ProcessarEstornoPgmtBoletoListener**: Listener para processar mensagens de estorno de boletos via JMS.
+- **EfetPgmtEstBolRouter**: Define rotas Camel para processamento de estornos.
+- **CamelContextWrapper**: Wrapper para o contexto Camel, gerenciando rotas.
+- **EfetPgmtEstBolService**: Serviço de domínio que processa estornos de pagamentos de boletos.
+- **Beneficiario, Boleto, ContaCorrente, EfetPgmtEstBol, Nsu, ObjetoAtualizaEstorno, ObjetoEstornoBalde, PagamentoTributoConsumo, RequestJson, ResponseAtualizaBase, ResponseJSON, SolicitacaoPagamento, TransferenciaTEFRequest**: Classes de domínio representando entidades e objetos de transferência de dados.
+- **CodigoTipoTransacao, TipoConta**: Enums para tipos de transação e conta.
 
-## 2. Principais Classes e Responsabilidades
+### 3. Tecnologias Utilizadas
+- Java 11
+- Spring Boot
+- Apache Camel
+- Swagger
+- IBM MQ
+- Maven
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| `Application` | Classe principal Spring Boot que inicializa a aplicação |
-| `ProcessarEstornoPgmtBoletoListener` | Listener JMS que consome mensagens da fila de estorno |
-| `EfetPgmtEstBolService` | Serviço de domínio que orquestra o processo de estorno |
-| `EfetPgmtEstBolRouter` | Roteador Apache Camel que define o fluxo de processamento |
-| `EstornoOutboundImpl` | Implementação que efetua a transferência de estorno via ESB Adapter |
-| `AtualizarPgmtEstornoOutboundImpl` | Implementação que atualiza o status do estorno na API de boletos |
-| `Boleto` | Entidade de domínio representando os dados do boleto a ser estornado |
-| `ObjetoEstornoBalde` | DTO para requisição de transferência de estorno |
-| `CodigoTipoTransacao` | Enum que mapeia códigos de liquidação para códigos de transação |
-| `TipoConta` | Enum que mapeia tipos de conta (CC, CP, CT, PG) |
+### 4. Principais Endpoints REST
+Não se aplica.
 
----
+### 5. Principais Regras de Negócio
+- Estorno de pagamento de boletos é realizado quando o código de status do estorno é 5 e a forma de pagamento é 1.
+- Atualização de estorno é feita via chamada REST utilizando o protocolo de devolução do boleto.
 
-## 3. Tecnologias Utilizadas
-- **Java 11**
-- **Spring Boot 2.x** (framework principal)
-- **Apache Camel 3.0.1** (orquestração de fluxos)
-- **IBM MQ 2.0.9** (mensageria)
-- **Spring JMS** (integração com filas)
-- **RestTemplate** (cliente HTTP)
-- **Lombok** (redução de boilerplate)
-- **Swagger/OpenAPI 3.0** (documentação de APIs)
-- **Spring Actuator** (monitoramento e health checks)
-- **Micrometer/Prometheus** (métricas)
-- **Logback** (logging)
-- **Maven** (gerenciamento de dependências)
-- **Docker** (containerização)
-- **OpenShift/Kubernetes** (orquestração de containers)
+### 6. Relação entre Entidades
+- **Boleto**: Relaciona-se com **ContaCorrente** para remetente e favorecido.
+- **ObjetoEstornoBalde**: Contém informações de contas favorecidas e remetentes, além de detalhes da transação.
+- **RequestJson**: Utilizado para enviar requisições de transferência.
 
----
+### 7. Estruturas de Banco de Dados Lidas
+Não se aplica.
 
-## 4. Principais Endpoints REST
-Não se aplica. Este é um sistema orientado a eventos (event-driven) que consome mensagens de filas. Não expõe endpoints REST para processamento de negócio, apenas endpoints de monitoramento via Actuator.
+### 8. Estruturas de Banco de Dados Atualizadas
+Não se aplica.
 
----
+### 9. Filas Lidas
+- **QL.CCBD.PROC_PAGMT_CONTAS.INT**: Fila JMS de onde o sistema consome mensagens de estorno de boletos.
 
-## 5. Principais Regras de Negócio
-1. **Validação de Elegibilidade para Estorno**: Apenas boletos com `codigoFormaPagamento = 1` (CCBD) e `codigoStatus = 5` são elegíveis para estorno
-2. **Inversão de Papéis na Transferência**: No estorno, o remetente original torna-se favorecido e o favorecido original torna-se remetente
-3. **Conversão de Código de Banco**: Código de banco 655 é convertido para 161 nas transferências
-4. **Mapeamento de Códigos de Transação**: Códigos de liquidação são mapeados para códigos de transação específicos:
-   - Liquidação 59 → Transação 8680 (Estorno Tributo)
-   - Liquidação 60 → Transação 8678 (Estorno Consumo)
-5. **Atualização de Status**: Após estorno bem-sucedido, o status é atualizado para 6 (estorno realizado com sucesso)
-6. **Data de Efetivação**: Utiliza sempre a data atual do sistema para efetivação do estorno
-7. **Produto e Sistema Fixos**: Utiliza código de produto 171 e código de sistema 1 para todas as transferências
+### 10. Filas Geradas
+Não se aplica.
 
----
+### 11. Integrações Externas
+- Serviço de estorno de tributos e consumo via REST.
+- Serviço de transferência entre contas via REST.
 
-## 6. Relação entre Entidades
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
-**Boleto** (entidade principal)
-- Contém: `ContaCorrente remetente` (1:1)
-- Contém: `ContaCorrente favorecido` (1:1)
-- Atributos: idBoleto, valorPagamento, codigoStatus, protocoloDevolucao, etc.
+**Justificativa:** O código é bem estruturado, utilizando boas práticas de programação como injeção de dependências e separação de responsabilidades. A documentação via Swagger e o uso de Apache Camel para roteamento são pontos positivos. No entanto, a ausência de endpoints REST pode limitar a interação direta com o sistema.
 
-**ContaCorrente**
-- Atributos: codigoBanco, numeroConta, codigoTipoConta, agencia, nomeBeneficiario, numeroCpfCnpj
-
-**ObjetoEstornoBalde** (DTO para transferência)
-- Contém: `Beneficiario contaCorrenteFavorecidoPK` (1:1)
-- Contém: `Beneficiario contaCorrenteRemetentePK` (1:1)
-- Atributos: valores, datas, códigos de transação
-
-**Beneficiario**
-- Atributos: cdBanco, nuContaCorrente, tpContaCorrente
-
-**ObjetoAtualizaEstorno** (DTO para atualização)
-- Atributos: codigoLancamento, numeroProtocoloDevolucao, codigoStatus
-
----
-
-## 7. Estruturas de Banco de Dados Lidas
-Não se aplica. O sistema não acessa diretamente estruturas de banco de dados. Consome dados via fila JMS e APIs REST.
-
----
-
-## 8. Estruturas de Banco de Dados Atualizadas
-Não se aplica. O sistema não atualiza diretamente estruturas de banco de dados. Realiza atualizações via APIs REST de outros serviços.
-
----
-
-## 9. Arquivos Lidos e Gravados
-
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| `application.yml` | Leitura | Spring Boot | Arquivo de configuração da aplicação com propriedades de ambiente |
-| `logback-spring.xml` | Leitura | Logback | Configuração de logging da aplicação |
-| Logs da aplicação | Gravação | Logback (console) | Logs de execução, erros e informações de processamento |
-
----
-
-## 10. Filas Lidas
-
-**Fila de Entrada:**
-- **Nome**: `QL.CCBD.PROC_PAGMT_CONTAS.INT`
-- **Tipo**: IBM MQ
-- **Queue Manager**: `QM.DIG.01`
-- **Classe Consumidora**: `ProcessarEstornoPgmtBoletoListener`
-- **Descrição**: Fila que recebe mensagens com dados de boletos que necessitam estorno
-- **Formato da Mensagem**: Objeto `Boleto` serializado em JSON
-
----
-
-## 11. Filas Geradas
-Não se aplica. O sistema não publica mensagens em filas, apenas consome.
-
----
-
-## 12. Integrações Externas
-
-| Sistema/Serviço | Tipo | Descrição |
-|-----------------|------|-----------|
-| **ESB Adapter (JBoss Legacy)** | API REST | Serviço legado que executa transferências entre contas através do método `CCPagamento.Transferencia.efetuarTransferenciaEntreContasBancoValidarSaldo` |
-| **sboot-ccbd-base-atom-pgto-trib-bol** | API REST | Serviço de pagamento de boletos que atualiza o status do estorno via endpoint PUT `/v1/pagamento-boleto/efetivar/{protocolo}/estorno` |
-| **IBM MQ** | Mensageria | Sistema de filas para consumo de mensagens de estorno |
-
----
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota:** 7/10
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Boa separação de responsabilidades com módulos `domain` e `application`
-- Uso adequado de padrões como Ports & Adapters (Hexagonal Architecture)
-- Utilização de Apache Camel para orquestração de fluxos
-- Configuração externalizada e separada por ambiente
-- Uso de Lombok para redução de boilerplate
-- Implementação de health checks e métricas
-- Logging estruturado e adequado
-
-**Pontos de Melhoria:**
-- Tratamento de exceções muito genérico no listener (captura `Exception` sem tratamento específico)
-- Falta de validações de entrada mais robustas
-- Ausência de testes unitários e de integração nos arquivos enviados
-- Valores "mágicos" hardcoded (ex: `codStatusEstorno = 5`, `formaPagamento = 1`, `cdProduto = 171`)
-- Comentários em português misturados com código em inglês
-- Falta de documentação JavaDoc nas classes principais
-- Método `tipoBanco()` com lógica de conversão específica sem documentação clara do motivo
-- Ausência de retry e circuit breaker para chamadas externas
-- Falta de validação de resposta das APIs externas
-
----
-
-## 14. Observações Relevantes
-
-1. **Arquitetura Event-Driven**: Sistema totalmente orientado a eventos, sem exposição de APIs REST próprias
-2. **Dependência de Sistemas Legados**: Forte dependência do ESB Adapter (JBoss) para efetivação de transferências
-3. **Ambientes Múltiplos**: Configuração preparada para 4 ambientes (local, des, qa, uat, prd)
-4. **Autenticação Basic**: Utiliza autenticação básica para chamadas ao ESB Adapter
-5. **Segurança**: Implementa módulos de segurança JWT e trilha de auditoria do BV
-6. **Containerização**: Preparado para execução em containers Docker/OpenShift
-7. **Monitoramento**: Expõe métricas Prometheus na porta 9090
-8. **Processamento Síncrono**: Apesar de consumir de fila, o processamento é síncrono (não há paralelização explícita)
-9. **Conversão de Dados**: Realiza conversões específicas de códigos de banco e tipos de conta
-10. **Status de Estorno**: Utiliza código de status 6 para indicar estorno realizado com sucesso
+### 13. Observações Relevantes
+- O sistema utiliza configuração externa via `application.yml` e variáveis de ambiente para diferentes perfis de execução.
+- A documentação do Swagger está configurada, mas não há endpoints REST expostos diretamente pelo sistema.

@@ -1,197 +1,70 @@
-# Ficha Técnica do Sistema
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
+### 1. Descrição Geral
+O sistema é uma aplicação batch desenvolvida em Java utilizando o framework Spring Batch. Seu objetivo é realizar a conciliação de transações de arquivos TIF, processando dados de entrada e inserindo registros conciliados em um banco de dados SQL Server.
 
-Sistema de processamento batch desenvolvido em Spring Batch para realizar a conciliação de transações de cartão de débito provenientes de arquivos TIF (Transaction Interchange Format). O sistema lê registros de conciliação da tabela `TbConciliacaoTransacao`, processa dados JSON armazenados em campos de texto, e insere os dados normalizados na tabela `TbConciliacaoTransacaoDebito`. O processamento é executado em lotes (chunks) de 100 registros, buscando transações dos últimos 40 dias que ainda não foram conciliadas.
+### 2. Principais Classes e Responsabilidades
+- **SpringBatchApplication**: Classe principal que inicia a aplicação Spring Batch.
+- **BatchConfiguration**: Configura o job de processamento batch.
+- **StepConfiguration**: Define o passo de processamento, incluindo leitura, processamento e escrita de dados.
+- **ReadersConfiguration**: Configura o leitor de dados do banco de dados.
+- **WritersConfiguration**: Configura o escritor de dados para o banco de dados.
+- **ConciliacaoProcessor**: Processa cada item de entrada, convertendo-o para o formato necessário para inserção.
+- **ConciliacaoWriter**: Escreve os dados processados no banco de dados.
+- **ConciliacaoTifInsertConverter**: Converte objetos de domínio para o formato de inserção.
+- **ConciliacaoArquivoTifMapper**: Mapeia resultados de consultas SQL para objetos de domínio.
+- **DateUtil**: Utilitário para manipulação de datas.
 
----
+### 3. Tecnologias Utilizadas
+- Java 11
+- Spring Batch
+- Spring Boot
+- SQL Server
+- Docker
+- Prometheus
+- Grafana
+- Maven
 
-## 2. Principais Classes e Responsabilidades
+### 4. Principais Endpoints REST
+Não se aplica.
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| `SpringBatchApplication` | Classe principal que inicializa a aplicação Spring Batch |
-| `BatchConfiguration` | Configura o Job principal de processamento |
-| `StepConfiguration` | Define o Step de carga com reader, processor e writer |
-| `ReadersConfiguration` | Configura o JdbcCursorItemReader para leitura do banco |
-| `WritersConfiguration` | Configura o JdbcBatchItemWriter para escrita no banco |
-| `ConciliacaoProcessor` | Processa e transforma dados de `ConciliacaoArquivoTif` para `ConciliacaoTifInsert` |
-| `ConciliacaoArquivoTifMapper` | Mapeia ResultSet para objetos de domínio e deserializa JSON |
-| `ConciliacaoTifInsertConverter` | Converte objetos de domínio para objetos de inserção |
-| `MsSqlDatasourceConfiguration` | Configura o DataSource para SQL Server |
-| `DefaultBatchConfig` | Configura o DataSource para o repositório do Spring Batch |
-| `TaskConfig` | Configura o TaskConfigurer para Spring Cloud Task |
-| `DateUtil` | Utilitário para conversão e formatação de datas |
-| `BatchExitCodeGenerator` | Gera código de saída apropriado baseado no status do job |
+### 5. Principais Regras de Negócio
+- Conciliação de transações de arquivos TIF.
+- Processamento de dados de entrada e inserção de registros conciliados no banco de dados.
+- Verificação de integridade e preenchimento de campos nulos durante o processamento.
 
----
+### 6. Relação entre Entidades
+- **ConciliacaoArquivoTif**: Entidade de domínio representando os dados de conciliação de arquivos TIF.
+- **ConciliacaoTifInsert**: Entidade de domínio para inserção de dados conciliados.
+- **TrnsoPayload**: Dados adicionais associados a uma transação, encapsulados dentro de ConciliacaoArquivoTif.
 
-## 3. Tecnologias Utilizadas
-
-- **Java 11**
-- **Spring Boot 2.x**
-- **Spring Batch** - Framework de processamento batch
-- **Spring Cloud Task** - Gerenciamento de tarefas
-- **Microsoft SQL Server** - Banco de dados (driver mssql-jdbc 7.2.2.jre11)
-- **JDBC/JDBI 3.9.1** - Acesso a dados
-- **Gson 2.8.9** - Serialização/deserialização JSON
-- **Lombok** - Redução de boilerplate
-- **Micrometer/Prometheus** - Métricas e monitoramento
-- **Logback** - Logging
-- **Docker** - Containerização
-- **Kubernetes/OpenShift** - Orquestração
-- **Maven** - Gerenciamento de dependências
-- **JUnit 5 + Mockito** - Testes unitários
-
----
-
-## 4. Principais Endpoints REST
-
-**não se aplica** - Este é um sistema batch que não expõe endpoints REST para processamento de negócio. Apenas endpoints do Spring Actuator para monitoramento:
-- `/actuator/health` - Health check
-- `/actuator/metrics/*` - Métricas
-- `/actuator/prometheus` - Métricas no formato Prometheus
-
----
-
-## 5. Principais Regras de Negócio
-
-1. **Seleção de Registros**: Busca apenas transações dos últimos 40 dias (`dateadd(dd,-40, GETDATE())`) com origem de arquivo igual a 2 (`CdArquivoOrigem = 2`) que ainda não foram conciliadas (LEFT JOIN com `TbConciliacaoTransacaoDebito` onde `CdConciliacaoTransacao IS NULL`)
-
-2. **Limite de Processamento**: Processa no máximo 10.000 registros por execução (`TOP(10000)`)
-
-3. **Tratamento de Nulos**: O processor valida e substitui valores nulos por valores padrão (strings vazias ou valores específicos como "1" para `dsLogin` e "S" para `flAtivo`)
-
-4. **Conversão de Valores Monetários**: Valores monetários em formato string são convertidos para BigDecimal e divididos por 100 quando necessário (`vlTransacaoReal`)
-
-5. **Deserialização JSON**: O campo `TeComplementoConciliacaoTrnso` contém um JSON com dados detalhados da transação que é deserializado para o objeto `TrnsoPayload`
-
-6. **Concatenação de Data/Hora**: Data e hora da transação são concatenadas para formar um `LocalDateTime` completo
-
-7. **Processamento em Chunks**: Registros são processados em lotes de 100 para otimização de performance
-
-8. **Auditoria**: Sistema registra login de processamento (`sbatch-ccbd-base-conciliacao-arquivo-tif`) e timestamps de inclusão/alteração
-
----
-
-## 6. Relação entre Entidades
-
-**Entidades Principais:**
-
-- **ConciliacaoArquivoTif**: Entidade de leitura que representa dados da tabela de conciliação de transações
-  - Contém dados básicos da transação (códigos, valores, datas)
-  - Possui relacionamento com `TrnsoPayload` (composição)
-
-- **TrnsoPayload**: Objeto complexo deserializado do JSON armazenado no campo `TeComplementoConciliacaoTrnso`
-  - Contém detalhes completos da transação (mais de 60 campos)
-  - Inclui dados de cartão, estabelecimento, autorizador, valores, etc.
-
-- **TrnsoPayloadDTO**: DTO para deserialização do JSON
-
-- **ConciliacaoTifInsert**: Entidade de escrita que representa o registro a ser inserido na tabela de destino
-  - Combina dados de `ConciliacaoArquivoTif` e `TrnsoPayload`
-  - Estrutura normalizada para persistência
-
-**Relacionamento**: ConciliacaoArquivoTif (1) --contém--> (1) TrnsoPayload → converte para → ConciliacaoTifInsert
-
----
-
-## 7. Estruturas de Banco de Dados Lidas
-
+### 7. Estruturas de Banco de Dados Lidas
 | Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
 |-----------------------------|------|----------|-----------------|
-| DBCCBD.CCBDTransacaoCartaoDebito.TbConciliacaoTransacao | Tabela | SELECT | Tabela principal de conciliação de transações de cartão, contém dados básicos e JSON com detalhes |
-| DBCCBD.CCBDTransacaoCartaoDebito.TbComplementoConciliacaoTrnso | Tabela | SELECT | Tabela complementar com informações adicionais da conciliação (nome do arquivo, payload JSON) |
-| DBCCBD.CCBDTransacaoCartaoDebito.TbConciliacaoTransacaoDebito | Tabela | SELECT | Tabela de destino usada no LEFT JOIN para identificar registros já processados |
+| TbConciliacaoTransacao      | tabela | SELECT | Tabela de transações para conciliação. |
+| TbComplementoConciliacaoTrnso | tabela | SELECT | Tabela de complementos de conciliação. |
 
----
-
-## 8. Estruturas de Banco de Dados Atualizadas
-
+### 8. Estruturas de Banco de Dados Atualizadas
 | Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
 |-----------------------------|------|----------|-----------------|
-| DBCCBD.CCBDTransacaoCartaoDebito.TbConciliacaoTransacaoDebito | Tabela | INSERT | Tabela de destino onde são inseridos os registros de conciliação processados e normalizados |
+| TbConciliacaoTransacaoDebito | tabela | INSERT | Tabela onde são inseridos os dados conciliados. |
 
----
+### 9. Filas Lidas
+Não se aplica.
 
-## 9. Arquivos Lidos e Gravados
+### 10. Filas Geradas
+Não se aplica.
 
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| selectConciliacaoTif.sql | Leitura | ReadersConfiguration / resources/sql/reader | Query SQL para leitura dos registros a serem processados |
-| insereConciliacaoTif.sql | Leitura | WritersConfiguration / resources/sql/writer | Query SQL parametrizada para inserção dos registros processados |
-| application.yml | Leitura | Spring Boot | Arquivo de configuração da aplicação com profiles (local, des, qa, uat, prd) |
-| logback-spring.xml | Leitura | Logback | Configuração de logging da aplicação |
+### 11. Integrações Externas
+- Banco de dados SQL Server para leitura e escrita de dados.
+- Prometheus e Grafana para monitoramento de métricas.
 
----
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
-## 10. Filas Lidas
+**Justificativa:** O código é bem estruturado e utiliza boas práticas de programação, como injeção de dependências e uso de padrões de projeto. A documentação e os testes são adequados, mas poderia haver uma melhor descrição dos objetivos do projeto no README.
 
-**não se aplica** - O sistema não consome mensagens de filas.
-
----
-
-## 11. Filas Geradas
-
-**não se aplica** - O sistema não publica mensagens em filas.
-
----
-
-## 12. Integrações Externas
-
-| Sistema/Serviço | Tipo | Descrição |
-|-----------------|------|-----------|
-| SQL Server (DBCCBD) | Banco de Dados | Banco de dados principal contendo as tabelas de conciliação de transações de cartão de débito |
-| Prometheus/Pushgateway | Monitoramento | Sistema de métricas para monitoramento do processamento batch (porta 9091) |
-| Grafana | Visualização | Dashboard para visualização de métricas do batch |
-| API Gateway BV | Autenticação | Gateway para autenticação JWT (configurado mas não utilizado ativamente no batch) |
-
----
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota: 6/10**
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Uso adequado do Spring Batch com separação clara de responsabilidades (Reader, Processor, Writer)
-- Utilização de Lombok para reduzir boilerplate
-- Presença de testes unitários
-- Configuração adequada para múltiplos ambientes
-- Uso de SQL externalizado em arquivos separados
-- Implementação de métricas e monitoramento
-
-**Pontos Negativos:**
-- **Processor extremamente verboso**: A classe `ConciliacaoProcessor` possui mais de 200 linhas apenas com validações `if (campo == null)`, o que poderia ser refatorado usando Optional, métodos auxiliares ou anotações de validação
-- **Falta de tratamento de erros**: Não há estratégias claras de retry, skip ou tratamento de exceções no processamento batch
-- **Código duplicado**: As classes `TrnsoPayload` e `TrnsoPayloadDTO` são praticamente idênticas, sem justificativa clara para duplicação
-- **Magic numbers**: Valores hardcoded como "100" (chunk size), "10000" (limit), "2" (arquivo origem) sem constantes nomeadas
-- **Falta de documentação**: Ausência de JavaDoc nas classes principais
-- **Mapper com lógica de negócio**: A classe `ConciliacaoArquivoTifMapper` mistura responsabilidades de mapeamento com deserialização JSON
-- **Testes incompletos**: Alguns testes são apenas stubs vazios (WritersConfigurationTest)
-- **Conversão manual de tipos**: Muitas conversões manuais que poderiam ser automatizadas com MapStruct ou similar
-
----
-
-## 14. Observações Relevantes
-
-1. **Infraestrutura**: O sistema está preparado para execução em Kubernetes/OpenShift com configurações de deployment, config maps e secrets
-
-2. **Performance**: O processamento em chunks de 100 registros é adequado, mas o limite de 10.000 registros por execução pode exigir múltiplas execuções para grandes volumes
-
-3. **Segurança**: Senhas e credenciais são gerenciadas via secrets do Kubernetes/OpenShift, não estão hardcoded
-
-4. **Monitoramento**: Integração com Prometheus permite acompanhamento detalhado do processamento
-
-5. **Profiles**: Sistema bem configurado para diferentes ambientes (local, des, qa, uat, prd)
-
-6. **Índices**: A query utiliza hints de índice (`WITH(nolock, index(...))`) para otimização, mas isso pode mascarar problemas de performance
-
-7. **Janela de Processamento**: A busca por transações dos últimos 40 dias pode gerar volume variável dependendo da carga do sistema
-
-8. **Exit Code**: Implementação customizada de exit code permite integração adequada com orquestradores de jobs
-
-9. **Dependências**: Algumas dependências comentadas no pom.xml sugerem mudanças recentes ou experimentação
-
-10. **Docker**: Imagem base customizada do Banco Votorantim (`pacotedocker-atle-base-java11`)
+### 13. Observações Relevantes
+- A aplicação utiliza Docker para facilitar o deploy e execução de serviços como Prometheus e Grafana.
+- O projeto possui integração com Jenkins para automação de builds e deploys.
+- A configuração de segurança está desativada, conforme indicado no arquivo `application.yml`.

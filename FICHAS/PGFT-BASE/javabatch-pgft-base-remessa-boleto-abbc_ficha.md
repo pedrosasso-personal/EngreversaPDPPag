@@ -1,149 +1,73 @@
-# Ficha Técnica do Sistema
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
+### 1. Descrição Geral
+O sistema é um componente Java Batch que utiliza o framework Spring Batch para processar arquivos de remessa de boletos da ABBC. Ele realiza operações de leitura, processamento e escrita de dados, gerando arquivos de compensação e realizando validações de duplicidade e consistência dos dados.
 
-Sistema batch Java responsável pela geração de arquivos de remessa de boletos no formato COB605 para a ABBC (Associação Brasileira de Bancos). O sistema consulta lançamentos de tesouraria pendentes no banco de dados Sybase, gera arquivos de compensação seguindo o layout específico da ABBC, valida a consistência dos dados e move os arquivos gerados para o diretório de saída. Utiliza o framework BV Sistemas para processamento batch com controle transacional e estratégia de recuperação em caso de falhas.
+### 2. Principais Classes e Responsabilidades
+- **ArquivoCob605Detalhe**: Representa os detalhes de um arquivo de cobrança, incluindo informações como código de barras e valor do título.
+- **ArquivoCob605Header**: Representa o cabeçalho de um arquivo de cobrança, contendo informações como nome e versão do arquivo.
+- **ArquivoCob605Layout**: Responsável por formatar e escrever diferentes partes de um arquivo de cobrança.
+- **ArquivoCob605Sumarizador**: Realiza a sumarização dos dados do arquivo, como quantidade de registros e valor total.
+- **ArquivoCob605Writer**: Gerencia a escrita de detalhes e fechamento de arquivos de cobrança.
+- **GlobalContext**: Mantém o contexto global do job, incluindo parâmetros de execução.
+- **ItemProcessor**: Processa cada item lido, sem realizar alterações.
+- **ItemReader**: Lê os detalhes dos arquivos de compensação e verifica pendências.
+- **ItemWriter**: Escreve os detalhes dos arquivos de compensação e realiza validações.
+- **MultiFileWriterAdapter**: Adapta a escrita para múltiplos arquivos, gerenciando eventos de escrita.
+- **GeracaoABBCBusinessImpl**: Implementa a lógica de negócios para geração de arquivos de compensação.
+- **GeracaoABBCDaoImpl**: Realiza operações de acesso a dados relacionadas aos arquivos de compensação.
+- **PgftException**: Exceção personalizada para erros no processamento.
+- **BooleanUtils, FileCreator, FileUtil, Propriedades, Resources, SiteUtil**: Utilitários para manipulação de arquivos, propriedades e formatação de dados.
 
-## 2. Principais Classes e Responsabilidades
+### 3. Tecnologias Utilizadas
+- Java
+- Spring Batch
+- Maven
+- Sybase JDBC Driver
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| **ItemReader** | Lê lançamentos de tesouraria do banco de dados e controla o fluxo de processamento em loop |
-| **ItemProcessor** | Processa os itens lidos (implementação passthrough sem transformações) |
-| **ItemWriter** | Escreve os arquivos COB605, valida duplicidades e consistência dos dados |
-| **MultiFileWriterAdapter** | Gerencia a criação de múltiplos arquivos de compensação e controla mudanças de arquivo |
-| **ArquivoCob605Writer** | Escreve registros no formato COB605 (header, detalhe, fechamento de lote e trailer) |
-| **ArquivoCob605Layout** | Define o layout posicional dos registros do arquivo COB605 |
-| **GeracaoABBCBusinessImpl** | Camada de negócio que orquestra operações de banco de dados |
-| **GeracaoABBCDaoImpl** | Acesso a dados via JDBC para consultas e atualizações |
-| **GlobalContext** | Contexto global com parâmetros de execução do job |
-| **MyResumeStrategy** | Estratégia de recuperação em caso de falhas, realizando rollback |
+### 4. Principais Endpoints REST
+Não se aplica.
 
-## 3. Tecnologias Utilizadas
+### 5. Principais Regras de Negócio
+- Verificação de arquivos pendentes antes de iniciar o processamento.
+- Validação de duplicidades nos arquivos gerados e no banco de dados.
+- Geração de arquivos de compensação com controle de versão e identificação.
+- Movimentação de arquivos entre diretórios após processamento.
+- Rollback de operações de banco de dados em caso de erro.
 
-- **Java** (versão não especificada explicitamente)
-- **Spring Framework** (configuração XML, injeção de dependências)
-- **Spring Batch** (framework BV Sistemas baseado em Spring Batch)
-- **Maven** (gerenciamento de dependências e build)
-- **Sybase ASE** (banco de dados - DBPGF_TES)
-- **JDBC** (acesso a dados via DriverManager e PreparedStatement)
-- **BV JDBC Driver** (driver customizado com suporte a transações)
-- **Bitronix** (gerenciador de transações JTA)
-- **Log4j** (logging)
-- **JUnit** (testes unitários)
+### 6. Relação entre Entidades
+- **ArquivoCompensacaoVO**: Relaciona-se com **DetalheArquivoCompensacaoVO** e **LancamentoVO** para representar um arquivo de compensação e seus detalhes.
+- **DetalheArquivoCompensacaoVO**: Contém um **ArquivoCompensacaoVO** e um **LancamentoVO**.
+- **LancamentoVO**: Representa um lançamento financeiro com informações de remetente e favorecido.
 
-## 4. Principais Endpoints REST
+### 7. Estruturas de Banco de Dados Lidas
+| Nome da Tabela/View/Coleção | Tipo (tabela/view/coleção) | Operação (SELECT/READ) | Breve Descrição |
+|-----------------------------|----------------------------|------------------------|-----------------|
+| TBL_SETUP_TESOURARIA        | tabela                     | SELECT                 | Obtém o valor STR para processamento. |
+| TbArquivoCompensacao        | tabela                     | SELECT                 | Verifica arquivos pendentes e duplicidades. |
+| TbDetalheArquivoCompensacao | tabela                     | SELECT                 | Verifica duplicidades de lançamentos. |
 
-Não se aplica. Este é um sistema batch sem endpoints REST.
+### 8. Estruturas de Banco de Dados Atualizadas
+| Nome da Tabela/View/Coleção | Tipo (tabela/view/coleção) | Operação (INSERT/UPDATE/DELETE) | Breve Descrição |
+|-----------------------------|----------------------------|-------------------------------|-----------------|
+| TbArquivoCompensacao        | tabela                     | INSERT/UPDATE/DELETE          | Gerencia os registros de arquivos de compensação. |
+| TbDetalheArquivoCompensacao | tabela                     | INSERT/DELETE                | Gerencia os detalhes dos arquivos de compensação. |
 
-## 5. Principais Regras de Negócio
+### 9. Filas Lidas
+Não se aplica.
 
-1. **Limite STR**: Apenas lançamentos com valor abaixo do limite STR são processados
-2. **Arquivos Completos**: Opcionalmente, só gera arquivos se houver pelo menos 20.000 registros
-3. **Agrupamento por Favorecido**: Detalhes são agrupados em lotes por ISPB do favorecido
-4. **Tamanho Máximo de Lote**: Cada lote contém no máximo 400 registros
-5. **Validação de Duplicidade**: Verifica duplicações tanto no arquivo quanto no banco de dados
-6. **Validação de Totalizadores**: Valida quantidade de registros e valor total entre arquivo físico e banco
-7. **Controle de Concorrência**: Não permite geração se houver arquivos pendentes recentes (últimos 15 minutos)
-8. **Geração de Código de Barras**: Converte código de barras digitável para formato de 44 posições
-9. **Versionamento de Arquivos**: Controla versão sequencial dos arquivos gerados
-10. **Status de Compensação**: Gerencia status dos lançamentos (pendente=1, selecionado=2, gerado=3, rejeitado=5)
+### 10. Filas Geradas
+Não se aplica.
 
-## 6. Relação entre Entidades
+### 11. Integrações Externas
+- Banco de dados Sybase para operações de leitura e escrita de dados de compensação.
 
-**ArquivoCompensacaoVO** (1) ----< (N) **DetalheArquivoCompensacaoVO** (N) >---- (1) **LancamentoVO**
+### 12. Avaliação da Qualidade do Código
+**Nota:** 7
 
-- **ArquivoCompensacaoVO**: Representa o arquivo de compensação gerado, contendo metadados como nome, versão, quantidade de registros e valor total
-- **DetalheArquivoCompensacaoVO**: Representa cada linha de detalhe do arquivo, associando um arquivo de compensação a um lançamento
-- **LancamentoVO**: Representa um lançamento de tesouraria (boleto) a ser incluído no arquivo
+**Justificativa:** O código é bem estruturado e utiliza boas práticas de programação, como separação de responsabilidades e uso de padrões de projeto. No entanto, a presença de muitos detalhes técnicos e a complexidade das operações podem dificultar a manutenção e a compreensão do sistema.
 
-Relacionamentos adicionais:
-- **ArquivoCob605Header**: Dados do cabeçalho do arquivo COB605
-- **ArquivoCob605Detalhe**: Dados de cada registro de detalhe no formato COB605
-- **ArquivoCob605Sumarizador**: Acumuladores e contadores para geração do arquivo
-
-## 7. Estruturas de Banco de Dados Lidas
-
-| Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
-|------------------------------|------|----------|-----------------|
-| TBL_SETUP_TESOURARIA | Tabela | SELECT | Consulta valor limite STR para processamento de boletos |
-| TbArquivoCompensacao | Tabela | SELECT | Verifica arquivos pendentes e busca totalizadores |
-| TbDetalheArquivoCompensacao | Tabela | SELECT | Valida duplicidades de lançamentos |
-| PrConsultaDadosCompensacaoV2 | Procedure | EXECUTE | Consulta lançamentos de tesouraria para geração do arquivo |
-| PrConsultarTotalArquivoCompensacao | Procedure | EXECUTE | Obtém totalizadores do arquivo gerado |
-
-## 8. Estruturas de Banco de Dados Atualizadas
-
-| Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
-|------------------------------|------|----------|-----------------|
-| TbArquivoCompensacao | Tabela | INSERT/UPDATE/DELETE | Cria novo registro de arquivo, atualiza status ou exclui em caso de erro |
-| TbDetalheArquivoCompensacao | Tabela | INSERT/DELETE | Insere detalhes dos lançamentos processados ou exclui em rollback |
-| PrCriarNovaRemessa | Procedure | EXECUTE | Cria novo registro de remessa no banco |
-| PrInserirDetArqCompensacaoV2 | Procedure | EXECUTE | Insere detalhe do arquivo de compensação |
-| PrInserirArquivoCompensacao | Procedure | EXECUTE | Atualiza arquivo de compensação com totalizadores finais |
-
-## 9. Arquivos Lidos e Gravados
-
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| config.properties | Leitura | Resources/Propriedades | Configurações de diretórios e prefixos de arquivo |
-| HCB*.txt (COB605) | Gravação | MultiFileWriterAdapter/FileCreator | Arquivos de remessa de boletos no formato COB605 |
-| robo.log | Gravação | Log4j (roboFile appender) | Log de execução do robô |
-| statistics-{executionId}.log | Gravação | Log4j (statistics appender) | Log de estatísticas de execução |
-
-**Diretórios:**
-- `{abbc.path.processamento}`: Diretório temporário onde arquivos são gerados
-- `{abbc.path.home}/{cod_banco}/{abbc.dir.saida}`: Diretório final para arquivos processados
-
-## 10. Filas Lidas
-
-Não se aplica. O sistema não consome mensagens de filas.
-
-## 11. Filas Geradas
-
-Não se aplica. O sistema não publica mensagens em filas.
-
-## 12. Integrações Externas
-
-| Sistema/Serviço | Tipo | Descrição |
-|-----------------|------|-----------|
-| Banco de Dados Sybase (DBPGF_TES) | JDBC | Consulta lançamentos de tesouraria e persiste informações dos arquivos gerados |
-| ABBC (Associação Brasileira de Bancos) | Arquivo | Gera arquivos de remessa no formato COB605 para compensação bancária |
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota: 6/10**
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Separação clara de responsabilidades (DAO, Business, Batch)
-- Uso de padrões de projeto (Strategy, Adapter, Template Method)
-- Validações consistentes de duplicidade e totalizadores
-- Tratamento de exceções centralizado
-- Uso de framework batch consolidado
-
-**Pontos Negativos:**
-- Código com comentários em português misturados com código
-- Strings SQL hardcoded em interface (GeracaoABBCDaoQueries)
-- Falta de documentação JavaDoc nas classes principais
-- Uso de `StringBuffer` em vez de `StringBuilder` em alguns pontos
-- Lógica de negócio misturada com código de infraestrutura em algumas classes
-- Configurações hardcoded (ex: tamanho máximo de lote = 400)
-- Falta de testes unitários abrangentes (apenas teste de integração)
-- Uso de encoding ISO-8859-1 em vez de UTF-8
-- Código de formatação posicional complexo e pouco legível (ArquivoCob605Layout)
-- Tratamento de exceções genérico em alguns pontos
-
-## 14. Observações Relevantes
-
-1. **Ambiente de Execução**: Sistema configurado para ambientes DEV/UAT com conexões Sybase específicas
-2. **Formato de Arquivo**: Layout posicional fixo de 160 caracteres por linha no formato COB605
-3. **Controle de Versão**: Arquivos possuem versionamento sequencial automático
-4. **Processamento em Loop**: Sistema pode executar continuamente (parâmetro LOOP_GERACAO)
-5. **Código de Barras**: Conversão específica de 47 para 44 posições seguindo regra da ABBC
-6. **Rollback Automático**: Em caso de erro, a estratégia MyResumeStrategy remove registros e arquivos gerados
-7. **Validação Rigorosa**: Múltiplas validações garantem integridade dos dados (duplicidade, totalizadores, arquivo físico)
-8. **Prefixo Configurável**: Prefixo do arquivo (HCB) é configurável via properties
-9. **Banco Remetente**: Suporta múltiplos bancos remetentes (parâmetro COD_BANCO, default 655)
-10. **Framework Proprietário**: Utiliza framework BV Sistemas, o que pode dificultar manutenção por equipes externas
+### 13. Observações Relevantes
+- O sistema utiliza propriedades configuráveis para definir diretórios de processamento e saída de arquivos.
+- A configuração do banco de dados é realizada através de arquivos XML, permitindo flexibilidade na definição de conexões.
+- O sistema possui testes de integração para validar o funcionamento do job batch.

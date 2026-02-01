@@ -1,241 +1,73 @@
-# Ficha Técnica do Sistema
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
+### 1. Descrição Geral
+O sistema é um microserviço corporativo orquestrador responsável por solicitar débito e bloquear saldo de conta corrente. Ele expõe endpoints para realizar operações de débito em contas correntes, integrando-se com serviços externos para consultar informações de contas e motivos de bloqueio, além de gerenciar monitoramentos de saldo.
 
-O sistema **sboot-ccbd-base-orch-solic-debito** é um microserviço orquestrador responsável por solicitar débito e bloquear saldo de conta corrente no contexto do Banco Digital (CCBD - Conta Corrente Banco Digital) do Banco Votorantim. 
+### 2. Principais Classes e Responsabilidades
+- **Application**: Classe principal que inicia a aplicação Spring Boot.
+- **SolicDebitoController**: Controlador responsável por expor os endpoints REST para solicitar débito e débito disponível.
+- **SolicDebitoService**: Serviço que orquestra as chamadas de débito utilizando o Camel.
+- **AppProperties**: Classe de configuração que carrega propriedades do sistema.
+- **SolicDebitoConfiguration**: Configuração do Camel e beans necessários para o funcionamento do sistema.
+- **CamelContextWrapper**: Wrapper para o contexto do Camel, gerenciando rotas e templates de produtor/consumidor.
+- **SolicDebitoRouter**: Define as rotas do Camel para o fluxo de orquestração de débito.
+- **SolicDebitoDiponivelRouter**: Define as rotas do Camel para o fluxo de orquestração de débito disponível.
+- **AtualizaMonitoramentoRepositoryImpl**: Implementação do repositório para atualizar monitoramentos de saldo.
+- **ConsultaContaRepositoryImpl**: Implementação do repositório para consultar informações de conta.
+- **ConsultaMotivoBloqueioRepositoryImpl**: Implementação do repositório para consultar motivos de bloqueio.
+- **SolicDebitoRepositoryImpl**: Implementação do repositório para solicitar débito.
+- **SolicDebitoStandInRepositoryImpl**: Implementação do repositório para solicitar débito em stand-in.
 
-O serviço atua como orquestrador, integrando-se com múltiplos serviços atômicos (atoms) para:
-- Solicitar débito em conta corrente
-- Consultar transações pendentes em stand-in
-- Criar e atualizar monitoramentos de saldo
-- Bloquear valores disponíveis em conta
-- Validar motivos de bloqueio
+### 3. Tecnologias Utilizadas
+- Java 11
+- Spring Boot
+- Apache Camel
+- Swagger
+- Maven
+- Docker
 
-Utiliza Apache Camel para orquestração de fluxos e Spring Boot como framework base.
-
----
-
-## 2. Principais Classes e Responsabilidades
-
-| Classe | Responsabilidade |
-|--------|------------------|
-| **Application** | Classe principal Spring Boot que inicializa a aplicação |
-| **SolicDebitoController** | Controller REST que expõe os endpoints de solicitação de débito |
-| **SolicDebitoService** | Serviço de domínio que coordena as solicitações via Apache Camel |
-| **SolicDebitoRouter** | Rota Camel para orquestração do fluxo de solicitação de débito |
-| **SolicDebitoDiponivelRouter** | Rota Camel para orquestração do fluxo de débito com saldo disponível |
-| **SolicDebitoRepositoryImpl** | Implementação de integração com serviço atômico de conta corrente |
-| **SolicDebitoStandInRepositoryImpl** | Implementação de integração com serviço stand-in |
-| **ConsultaContaRepositoryImpl** | Implementação de consulta de saldo de conta |
-| **CriaMonitoramentoRepositoryImpl** | Implementação de criação de monitoramento de saldo |
-| **AtualizaMonitoramentoRepositoryImpl** | Implementação de atualização de monitoramento |
-| **ConsultaMotivoBloqueioRepositoryImpl** | Implementação de consulta de motivos de bloqueio |
-| **CodigoBancoProcessor** | Processador Camel para validação e conversão de código de banco |
-| **PreencheValorBloqueadoProcessor** | Processador Camel para cálculo de valor a ser bloqueado |
-| **SolicDebitoMapper** | Mapeador de objetos de request para domínio |
-| **SolicDebitoResponseMapper** | Mapeador de objetos de domínio para response |
-
----
-
-## 3. Tecnologias Utilizadas
-
-- **Java 11**
-- **Spring Boot 2.x** (framework base)
-- **Spring Security OAuth2** (autenticação JWT)
-- **Apache Camel 3.0.1** (orquestração de fluxos)
-- **Maven** (gerenciamento de dependências)
-- **Swagger/OpenAPI 3.0** (documentação de API)
-- **Lombok** (redução de boilerplate)
-- **RestTemplate** (cliente HTTP)
-- **Logback** (logging)
-- **JUnit 5** (testes unitários)
-- **Mockito** (mocks em testes)
-- **Actuator + Prometheus** (métricas e monitoramento)
-- **Docker** (containerização)
-
----
-
-## 4. Principais Endpoints REST
-
+### 4. Principais Endpoints REST
 | Método | Endpoint | Classe Controladora | Descrição |
 |--------|----------|---------------------|-----------|
-| POST | `/v1/banco-digital/contas/debito` | SolicDebitoController | Solicita débito em conta corrente com validação de saldo |
-| POST | `/v1/banco-digital/contas/debito-valor-disponivel` | SolicDebitoController | Solicita débito com bloqueio de valor disponível e criação de monitoramento |
+| POST   | /v1/banco-digital/contas/debito | SolicDebitoController | Solicita débito em conta corrente. |
+| POST   | /v1/banco-digital/contas/debito-valor-disponivel | SolicDebitoController | Solicita débito disponível em conta corrente. |
 
-**Headers obrigatórios:**
-- `codigoBanco`: Código do banco
-- `numeroAgencia`: Número da agência
-- `numeroConta`: Número da conta
-- `tipoConta`: Tipo da conta
+### 5. Principais Regras de Negócio
+- Validação de código de banco e motivo de bloqueio.
+- Verificação de transações pendentes em stand-in.
+- Atualização de monitoramento de saldo após operações de débito.
+- Bloqueio de saldo baseado em condições específicas (valor solicitado, protocolo, etc.).
 
----
+### 6. Relação entre Entidades
+- **SolicDebito**: Representa uma solicitação de débito, incluindo informações de conta e operação.
+- **SolicDebitoProcesso**: Extende SolicDebito, adicionando informações sobre o processo de débito.
+- **SolicDebitoDiponivelProcesso**: Extende SolicDebitoProcesso, adicionando informações sobre monitoramento de saldo e motivo de bloqueio.
+- **MonitoramentoSaldo**: Representa o monitoramento de saldo de uma conta.
+- **MotivoBloqueio**: Representa o motivo pelo qual um saldo pode ser bloqueado.
 
-## 5. Principais Regras de Negócio
+### 7. Estruturas de Banco de Dados Lidas
+Não se aplica.
 
-1. **Validação de Código de Banco**: Converte código externo (compesação) para código interno (BV=161/655, BVSA=436/413)
+### 8. Estruturas de Banco de Dados Atualizadas
+Não se aplica.
 
-2. **Fluxo Stand-In**: 
-   - Verifica se conta está na lista permitida para stand-in
-   - Consulta transações pendentes em stand-in
-   - Se conta fechada ou com transação pendente, redireciona para stand-in
+### 9. Filas Lidas
+Não se aplica.
 
-3. **Débito com Saldo Disponível**:
-   - Valida número de protocolo (não pode ser nulo/vazio)
-   - Valida valor da operação (não pode ser nulo/negativo)
-   - Consulta saldo da conta
-   - Valida motivo de bloqueio (deve estar ativo e ser monitorado)
-   - Calcula valor a bloquear (menor entre solicitado e disponível)
-   - Cria monitoramento de saldo
-   - Executa débito se valor > 0
-   - Atualiza monitoramento com resultado
+### 10. Filas Geradas
+Não se aplica.
 
-4. **Validação de Motivo de Bloqueio**: Motivo deve estar ativo (`flAtivo=true`) e ser monitorado (`flMonitorado=true`)
+### 11. Integrações Externas
+- Serviço Atom Bloqueio Saldo: Utilizado para gerenciar bloqueios de saldo.
+- Serviço Atom Conta Corrente: Utilizado para consultar informações de conta corrente.
+- Serviço Atom Conta Corrente StandIn: Utilizado para verificar transações pendentes em stand-in.
 
-5. **Tratamento de Conta Fechada**: Retorna status 307 (Temporary Redirect) quando conta está fechada
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
-6. **Sanitização de Logs**: Remove quebras de linha e espaços múltiplos de valores logados
+**Justificativa:** O código é bem estruturado e utiliza boas práticas de programação, como injeção de dependências e uso de padrões de projeto. A documentação e os testes são adequados, mas poderiam ser mais detalhados em alguns pontos para melhorar a manutenibilidade.
 
----
-
-## 6. Relação entre Entidades
-
-**Entidades principais:**
-
-- **SolicDebito**: Representa uma solicitação de débito
-  - Atributos: codigoBanco, numeroAgencia, numeroConta, tipoConta, valorOperacao, flLancamentoIncondicionalSaldo, codigoMotivoBloqueio, dsComplementoOperacao, numeroProtocolo
-
-- **SolicDebitoProcesso**: Encapsula o processo de solicitação
-  - Contém: SolicDebito, SolicDebitoResponse, SolicDebitoStandInResponse, flags de controle
-
-- **SolicDebitoDiponivelProcesso**: Estende SolicDebitoProcesso para débito com saldo disponível
-  - Adiciona: MonitoramentoSaldo, SaldoConta, MotivoBloqueio
-
-- **MonitoramentoSaldo**: Representa um monitoramento de bloqueio
-  - Relacionamento 1:N com MonitoramentoSaldoBloqueado
-
-- **SaldoConta**: Representa saldos da conta
-  - Atributos: valorBloqueado, valorDisponivel, valorIndisponivel, valorLimite, valorTotal
-
-- **MotivoBloqueio**: Representa um motivo de bloqueio cadastrado
-  - Atributos: cdMotivoBloqueio, descricao, flMonitorado, flAtivo, nuOrdemPrioridade
-
----
-
-## 7. Estruturas de Banco de Dados Lidas
-
-não se aplica
-
-*Observação: O sistema não acessa diretamente banco de dados. Todas as operações são realizadas via APIs REST de serviços atômicos.*
-
----
-
-## 8. Estruturas de Banco de Dados Atualizadas
-
-não se aplica
-
-*Observação: O sistema não atualiza diretamente banco de dados. Todas as operações de escrita são realizadas via APIs REST de serviços atômicos.*
-
----
-
-## 9. Arquivos Lidos e Gravados
-
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| application.yml | leitura | Spring Boot (startup) | Arquivo de configuração da aplicação com profiles (local, des, qa, uat, prd) |
-| logback-spring.xml | leitura | Logback (startup) | Configuração de logging em formato JSON |
-| sboot-ccbd-base-orch-solic-debito.yaml | leitura | Swagger Codegen (build) | Especificação OpenAPI para geração de interfaces |
-
----
-
-## 10. Filas Lidas
-
-não se aplica
-
----
-
-## 11. Filas Geradas
-
-não se aplica
-
----
-
-## 12. Integrações Externas
-
-| Sistema Integrado | Tipo | Descrição |
-|-------------------|------|-----------|
-| **sboot-ccbd-base-atom-conta-corrente** | API REST | Serviço atômico para operações de débito em conta corrente. Endpoint: `/v1/banco-digital/contas/debito/` |
-| **sboot-ccbd-base-atom-conta-corrente-stdin** | API REST | Serviço atômico para operações em modo stand-in. Endpoints: `/v1/banco-digital/contas/transacao` (GET), `/v1/banco-digital/contas/debito` (POST) |
-| **sboot-ccbd-base-atom-bloqueios-saldo** | API REST | Serviço atômico para gerenciamento de bloqueios e monitoramentos de saldo. Endpoints: `/v1/contas/monitoramentos` (POST/PUT), `/v1/motivos-bloqueio/{codigo}` (GET) |
-| **OAuth2 JWT Provider** | OAuth2 | Provedor de autenticação JWT. URL configurável por ambiente (ex: api-digitaluat.bancovotorantim.com.br) |
-
-**Observações:**
-- Todas as integrações utilizam RestTemplate com segurança OAuth2
-- Headers customizados são enviados: codigoBanco, numeroAgencia, numeroConta, tipoConta, validaStandIn
-- Tratamento específico para erros HTTP 4xx e 5xx com conversão para SolicDebitoException
-
----
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota: 7/10**
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Boa separação de responsabilidades com arquitetura em camadas (domain/application)
-- Uso adequado de padrões como Repository, Service, Mapper
-- Cobertura de testes unitários presente
-- Uso de Apache Camel para orquestração de fluxos complexos
-- Tratamento de exceções estruturado com classe customizada
-- Uso de Lombok para reduzir boilerplate
-- Documentação OpenAPI/Swagger
-- Sanitização de logs para segurança
-
-**Pontos de Melhoria:**
-- Código com alguns "code smells": métodos longos (ex: `solicitarDebito` em SolicDebitoRepositoryImpl)
-- Lógica de negócio misturada com infraestrutura em alguns pontos
-- Uso de flags booleanas em vez de enums para estados (contaCorrenteFechado, transacaoPendenteStandIn)
-- Constantes hardcoded em alguns locais (ex: "N", "S" para flags)
-- Falta de validação de entrada em alguns pontos
-- Comentários em português misturados com código em inglês
-- Alguns testes com nomes genéricos (ex: "test()")
-- Uso de `@SneakyThrows` que pode esconder exceções
-- Configuração de URLs via properties sem validação
-
-**Recomendações:**
-- Extrair métodos menores e mais coesos
-- Criar enums para estados e flags
-- Padronizar nomenclatura (português vs inglês)
-- Adicionar validações de entrada com Bean Validation
-- Melhorar nomes de testes para refletir cenários
-- Considerar uso de Circuit Breaker para integrações externas
-
----
-
-## 14. Observações Relevantes
-
-1. **Arquitetura Multi-módulo**: O projeto está dividido em dois módulos Maven:
-   - `domain`: Contém lógica de negócio, entidades, portas e rotas Camel
-   - `application`: Contém infraestrutura, controllers, implementações de repositórios
-
-2. **Segurança**: Utiliza OAuth2 com JWT para autenticação. Endpoints públicos configuráveis incluem Swagger e Actuator.
-
-3. **Profiles de Ambiente**: Suporta múltiplos ambientes (local, des, qa, uat, prd) com configurações específicas via variáveis de ambiente.
-
-4. **Stand-In**: Sistema possui lógica específica para operação em modo stand-in quando sistema principal está indisponível ou conta está fechada. Lista de contas permitidas configurável via properties.
-
-5. **Monitoramento**: Integrado com Prometheus para métricas e possui endpoints Actuator para health checks.
-
-6. **Versionamento de API**: API versionada com prefixo `/v1/`.
-
-7. **Conversão de Códigos de Banco**: Sistema converte códigos de compensação (655, 413) para códigos internos (161, 436) via enum BancoEnum.
-
-8. **Tratamento de Erros**: Erros de integração são convertidos para SolicDebitoException com códigos padronizados (BDCC_ERRO_INTERNO, BDCC_CONTA_NAO_ENCONTRADA, BDCC_MOTIVO_BLOQUEIO_MONITORADO_INVALIDO).
-
-9. **Logs Estruturados**: Configuração de logs em formato JSON para facilitar análise e integração com ferramentas de observabilidade.
-
-10. **Testes**: Estrutura de testes separada em unit, integration e functional, com suporte a testes de arquitetura via ArchUnit.
-
-11. **Containerização**: Dockerfile baseado em imagem Java 11 do repositório interno do banco.
-
-12. **Geração de Código**: Utiliza Swagger Codegen Maven Plugin para gerar interfaces de API a partir da especificação OpenAPI.
+### 13. Observações Relevantes
+- O sistema utiliza o Apache Camel para orquestrar as chamadas de serviço, o que facilita a integração e o processamento de mensagens.
+- A configuração do Swagger permite a documentação e teste dos endpoints expostos.
+- O uso de Docker facilita a implantação e execução do serviço em ambientes diversos.

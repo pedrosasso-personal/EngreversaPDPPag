@@ -1,187 +1,95 @@
-# Ficha Técnica do Sistema
+```markdown
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
+### 1. Descrição Geral
+O sistema "Serviço Atômico de NotificaPagamento" é um microserviço responsável por gerenciar notificações de pagamento. Ele oferece funcionalidades para inserir, atualizar e consultar notificações de pagamento, além de tratar erros e realizar integrações com endpoints externos.
 
-Sistema atômico de notificação de pagamentos desenvolvido em Spring Boot. O sistema é responsável por gerenciar e enviar notificações de eventos de pagamento para parceiros/fintechs, controlando tentativas de envio, registrando erros e mantendo histórico de notificações. Suporta diferentes tipos de notificação (CashIn, CashOut, Callback) e integra-se com banco de dados SQL Server para persistência de dados.
+### 2. Principais Classes e Responsabilidades
+- **Application**: Classe principal que inicia o aplicativo Spring Boot.
+- **NotificaPagamentoController**: Controlador REST que expõe endpoints para manipulação de notificações de pagamento.
+- **NotificaPagamentoService**: Classe de serviço que contém a lógica de negócio para manipulação de notificações de pagamento.
+- **NotificaPagamentoRepositoryImpl**: Implementação do repositório que interage com o banco de dados para operações de CRUD.
+- **ExceptionControllerHandler**: Classe que lida com exceções e fornece respostas adequadas para erros de negócio e erros internos.
+- **Mapper Classes**: Classes responsáveis por mapear objetos de domínio para representações e vice-versa.
 
-## 2. Principais Classes e Responsabilidades
+### 3. Tecnologias Utilizadas
+- Java 11
+- Spring Boot
+- JDBI
+- Swagger
+- SQL Server
+- Prometheus
+- Grafana
+- Docker
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| `NotificaPagamentoService` | Serviço de domínio que orquestra as operações de notificação de pagamentos |
-| `NotificaPagamentoController` | Controlador REST que expõe os endpoints da API |
-| `NotificaPagamentoRepositoryImpl` | Implementação do repositório usando JDBI para acesso ao banco de dados |
-| `NotificaPagamentoConfiguration` | Configuração principal da aplicação |
-| `JdbiConfiguration` | Configuração do JDBI para acesso a dados |
-| `OpenApiConfiguration` | Configuração do Swagger/OpenAPI para documentação |
-| `ExceptionControllerHandler` | Tratamento centralizado de exceções |
-| `NotificacaoPagamentoFintech` | Entidade de domínio representando notificação de pagamento |
-| `ControleRetornoNotificacao` | Entidade de domínio para controle de retorno de notificações |
-| `NotificacaoErroFintech` | Entidade de domínio para registro de erros de notificação |
-| Diversos Mappers | Classes responsáveis por conversão entre entidades de domínio e representações REST |
-
-## 3. Tecnologias Utilizadas
-
-- **Framework Principal**: Spring Boot 2.x
-- **Linguagem**: Java 11
-- **Persistência**: JDBI 3.9.1
-- **Banco de Dados**: Microsoft SQL Server (driver 7.4.0.jre11)
-- **Documentação API**: Swagger/Springfox 3.0.0
-- **Monitoramento**: Spring Boot Actuator + Micrometer + Prometheus
-- **Visualização**: Grafana
-- **Build**: Maven
-- **Segurança**: Spring Security + JWT (bv-security 0.22.4)
-- **Auditoria**: BV Audit 2.3.5
-- **Testes**: JUnit 5, Mockito, Rest Assured, Pact
-- **Serialização**: Gson
-- **Utilitários**: Lombok
-- **Container**: Docker
-
-## 4. Principais Endpoints REST
-
+### 4. Principais Endpoints REST
 | Método | Endpoint | Classe Controladora | Descrição |
 |--------|----------|---------------------|-----------|
-| POST | /v1/inserirNotificacaoFintech | NotificaPagamentoController | Insere dados de notificação de pagamento |
-| POST | /v1/inserirControleRetornoNotificacao | NotificaPagamentoController | Insere retorno da notificação |
-| POST | /v1/inserirNotificacaoErroFintech | NotificaPagamentoController | Insere erro de notificação |
-| PUT | /v1/atualizarFlagAtivo | NotificaPagamentoController | Atualiza flag ativo de uma notificação |
-| PUT | /v1/atualizarDataNotificacao | NotificaPagamentoController | Atualiza data de envio da notificação |
-| GET | /v1/buscarEventoNotificacao/{cdEventoNotificacao} | NotificaPagamentoController | Consulta evento de notificação |
-| GET | /v1/buscarNotificacao | NotificaPagamentoController | Consulta notificação por protocolo e evento |
-| GET | /v1/buscarNotificacaoPorCodigo | NotificaPagamentoController | Consulta notificação por código |
-| GET | /v1/buscarParametrosPagamentoFintech | NotificaPagamentoController | Consulta parâmetros da fintech |
-| GET | /v1/buscarParametrosNotificacao | NotificaPagamentoController | Consulta parâmetros de notificação |
-| GET | /v1/buscarDadosNotificacaoCashOut | NotificaPagamentoController | Consulta dados para notificação CashOut |
-| GET | /v1/buscarDadosNotificacaoCashIn | NotificaPagamentoController | Consulta dados para notificação CashIn |
-| GET | /v1/buscarDadosNotificacaoCallback | NotificaPagamentoController | Consulta dados para notificação Callback |
-| GET | /v1/buscarEndPointFintech | NotificaPagamentoController | Consulta endpoint da fintech |
-| GET | /v1/obterNotificacaoParceiroWalletTributos/{cdLiquidacao} | NotificaPagamentoController | Obtém notificação do parceiro wallet |
+| POST   | /v1/inserirControleRetornoNotificacao | NotificaPagamentoController | Insere retorno da notificação |
+| POST   | /v1/inserirNotificacaoErroFintech | NotificaPagamentoController | Insere erro de notificação |
+| POST   | /v1/inserirNotificacaoFintech | NotificaPagamentoController | Insere dados da notificação |
+| PUT    | /v1/atualizarFlagAtivo | NotificaPagamentoController | Atualiza FlAtivo de uma notificação |
+| PUT    | /v1/atualizarDataNotificacao | NotificaPagamentoController | Atualiza a data de envio da notificação |
+| GET    | /v1/buscarParametrosPagamentoFintech | NotificaPagamentoController | Consulta parâmetros da fintech |
+| GET    | /v1/buscarParametrosNotificacao | NotificaPagamentoController | Consulta parâmetros da notificação |
+| GET    | /v1/buscarEventoNotificacao/{cdEventoNotificacao} | NotificaPagamentoController | Consulta evento |
+| GET    | /v1/buscarNotificacao | NotificaPagamentoController | Consulta a quantidade de notificações |
+| GET    | /v1/buscarNotificacaoPorCodigo | NotificaPagamentoController | Consulta a quantidade de notificações |
+| GET    | /v1/buscarDadosNotificacaoCashOut | NotificaPagamentoController | Consulta os dados para a notificação de CashOut |
+| GET    | /v1/buscarDadosNotificacaoCashIn | NotificaPagamentoController | Consulta os dados para a notificação de CashIn |
+| GET    | /v1/buscarDadosNotificacaoCallback | NotificaPagamentoController | Consulta os dados para a notificação de Callback |
+| GET    | /v1/buscarEndPointFintech | NotificaPagamentoController | Consulta os dados de EndPoint da Fintech |
+| GET    | /v1/obterNotificacaoParceiroWalletTributos/{cdLiquidacao} | NotificaPagamentoController | Obter notificação parceiro |
 
-## 5. Principais Regras de Negócio
+### 5. Principais Regras de Negócio
+- Inserção de notificações de pagamento e controle de retorno.
+- Atualização de status de notificações.
+- Consulta de eventos de notificação e parâmetros de pagamento.
+- Tratamento de exceções específicas de negócio e erros internos.
 
-- **Controle de Tentativas**: Sistema controla quantidade de tentativas de envio de notificações por parceiro/fintech
-- **Gestão de Status**: Mantém flag ativo/inativo para controlar ciclo de vida das notificações
-- **Registro de Erros**: Captura e persiste erros de notificação para análise posterior
-- **Controle de Retorno**: Registra retornos das notificações enviadas com código HTTP e origem da chamada
-- **Validação de Sucesso**: Consulta quantidade de notificações bem-sucedidas e com erro por protocolo
-- **Tipos de Notificação**: Suporta diferentes tipos (CashIn, CashOut, Callback) com configurações específicas
-- **Atualização de Data**: Registra data/hora de envio das notificações
-- **Parametrização por Parceiro**: Busca parâmetros específicos (URL, usuário, tentativas) por parceiro/fintech
-- **Eventos de Notificação**: Gerencia diferentes eventos de notificação com configurações de segurança
-- **Integração com Liquidação**: Relaciona notificações com códigos de liquidação e lançamento
+### 6. Relação entre Entidades
+- **ControleRetornoNotificacao**: Relacionado a notificações de pagamento através de `cdNotificacaoFintech`.
+- **DadosNotificacaoCallback**, **DadosNotificacaoCashIn**, **DadosNotificacaoCashOut**: Entidades que representam diferentes tipos de notificações.
+- **EndPointFintech**: Representa o endpoint de uma fintech.
+- **EventoNotificacao**: Entidade que representa eventos de notificação.
+- **NotificacaoErroFintech**, **NotificacaoPagamentoFintech**: Entidades que representam notificações de erro e pagamento.
+- **NotificacaoWallet**: Entidade que representa notificações de carteira.
 
-## 6. Relação entre Entidades
-
-**Entidades Principais:**
-
-- **NotificacaoPagamentoFintech**: Entidade central que representa uma notificação de pagamento
-  - Relaciona-se com EventoNotificacao (N:1)
-  - Possui múltiplos ControleRetornoNotificacao (1:N)
-  
-- **ControleRetornoNotificacao**: Registra retornos de tentativas de notificação
-  - Pertence a uma NotificacaoPagamentoFintech (N:1)
-  
-- **NotificacaoErroFintech**: Registra erros de notificação
-  - Independente, mas relacionada conceitualmente com NotificacaoPagamentoFintech
-  
-- **EventoNotificacao**: Define tipos de eventos de notificação
-  - Possui múltiplas NotificacaoPagamentoFintech (1:N)
-  
-- **DadosNotificacaoCallback/CashIn/CashOut**: Value Objects com dados específicos por tipo de notificação
-
-- **EndPointFintech**: Contém informações de endpoint do parceiro
-
-- **ParametroPagamentoFintech**: Parâmetros de configuração por fintech
-
-- **NotificacaoWallet**: Dados de notificação para wallet/tributos
-
-## 7. Estruturas de Banco de Dados Lidas
-
+### 7. Estruturas de Banco de Dados Lidas
 | Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
 |-----------------------------|------|----------|-----------------|
-| TbEventoNotificacao | Tabela | SELECT | Consulta eventos de notificação configurados |
-| TbNotificacaoFintech | Tabela | SELECT | Consulta notificações de pagamento registradas |
-| TbControleRetornoNotificacao | Tabela | SELECT | Consulta retornos de notificações (implícito nas queries) |
-| TbParametroPagamentoFintech | Tabela | SELECT | Consulta parâmetros de configuração da fintech |
-| TbParametroConsultaCliente | Tabela | SELECT | Consulta parâmetros de cliente para validação |
-| TbValidacaoOrigemPagamento | Tabela | SELECT | Consulta dados de origem e validação de pagamento |
-| TbOrigemPagamentoMultiplaConta | Tabela | SELECT | Consulta origem de pagamento com múltiplas contas |
-| TbRelacaoLiquidacaoGrupo | Tabela | SELECT | Consulta relação entre liquidação e grupo |
-| TbContaPagamentoFintech | Tabela | SELECT | Consulta contas de pagamento da fintech |
-| TbLancamento | Tabela | SELECT | Consulta lançamentos de pagamento |
-| TbLancamentoPessoa | Tabela | SELECT | Consulta pessoas relacionadas ao lançamento |
-| TbStatusLancamento | Tabela | SELECT | Consulta status do lançamento |
-| TbErroProcessamento | Tabela | SELECT | Consulta erros de processamento de pagamento |
+| TbNotificacaoFintech        | tabela | SELECT | Armazena notificações de pagamento |
+| TbControleRetornoNotificacao| tabela | SELECT | Armazena controle de retorno de notificações |
+| TbEventoNotificacao         | tabela | SELECT | Armazena eventos de notificações |
+| TbParametroPagamentoFintech | tabela | SELECT | Armazena parâmetros de pagamento de fintech |
+| TbValidacaoOrigemPagamento  | tabela | SELECT | Armazena validações de origem de pagamento |
 
-## 8. Estruturas de Banco de Dados Atualizadas
-
+### 8. Estruturas de Banco de Dados Atualizadas
 | Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
 |-----------------------------|------|----------|-----------------|
-| TbNotificacaoFintech | Tabela | INSERT | Insere nova notificação de pagamento |
-| TbNotificacaoFintech | Tabela | UPDATE | Atualiza flag ativo e data de notificação |
-| TbControleRetornoNotificacao | Tabela | INSERT | Insere controle de retorno de notificação |
-| TbNotificacaoErroFintech | Tabela | INSERT | Insere registro de erro de notificação |
+| TbNotificacaoFintech        | tabela | INSERT/UPDATE | Armazena notificações de pagamento |
+| TbControleRetornoNotificacao| tabela | INSERT | Armazena controle de retorno de notificações |
+| TbNotificacaoErroFintech    | tabela | INSERT | Armazena notificações de erro de fintech |
 
-## 9. Arquivos Lidos e Gravados
-
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| *.sql (queries) | Leitura | NotificaPagamentoRepositoryImpl | Arquivos SQL com queries parametrizadas do JDBI |
-| application.yml | Leitura | Spring Boot | Configurações da aplicação por ambiente |
-| application-local.yml | Leitura | Spring Boot | Configurações específicas do ambiente local |
-| logback-spring.xml | Leitura | Logback | Configuração de logs da aplicação |
-| sboot-spag-base-atom-notifica-pagamento.yml | Leitura | Swagger | Especificação OpenAPI da API |
-
-## 10. Filas Lidas
-
+### 9. Filas Lidas
 não se aplica
 
-## 11. Filas Geradas
-
+### 10. Filas Geradas
 não se aplica
 
-## 12. Integrações Externas
+### 11. Integrações Externas
+- Integração com endpoints de fintechs para envio e recebimento de notificações.
+- Autenticação via OAuth2 com JWT.
 
-| Sistema/Serviço | Tipo | Descrição |
-|-----------------|------|-----------|
-| Fintechs/Parceiros | HTTP REST | Envio de notificações de pagamento para endpoints configurados dos parceiros |
-| SQL Server (DBSPAG) | JDBC | Banco de dados principal para persistência de notificações e configurações |
-| Prometheus | HTTP | Exportação de métricas de monitoramento |
-| API Gateway BV | OAuth2/JWT | Autenticação e autorização via JWT |
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
-## 13. Avaliação da Qualidade do Código
+**Justificativa:** O código é bem estruturado e utiliza boas práticas de programação, como injeção de dependências e uso de padrões de projeto. A documentação é clara e os testes são abrangentes. No entanto, poderia haver uma melhor organização dos pacotes para facilitar a navegação e manutenção.
 
-**Nota: 7.5/10**
+### 13. Observações Relevantes
+- O sistema utiliza Prometheus e Grafana para monitoramento de métricas.
+- A configuração do sistema é feita através de arquivos YAML e XML, permitindo flexibilidade para diferentes ambientes.
+- O projeto está configurado para ser executado em um ambiente Docker.
 
-**Justificativa:**
-
-**Pontos Positivos:**
-- Arquitetura bem organizada seguindo padrões hexagonais (domain, application, infrastructure)
-- Separação clara de responsabilidades entre camadas
-- Uso adequado de padrões como Repository, Service, Mapper
-- Boa cobertura de testes unitários, integração e funcionais
-- Documentação OpenAPI completa
-- Uso de Lombok reduzindo boilerplate
-- Configuração adequada de monitoramento (Actuator, Prometheus, Grafana)
-- Tratamento centralizado de exceções
-
-**Pontos de Melhoria:**
-- Alguns mappers poderiam usar MapStruct ao invés de conversões manuais com Gson
-- Queries SQL embutidas em arquivos separados (bom), mas poderiam usar JPA/Hibernate para maior abstração
-- Falta de validação de entrada em alguns endpoints (Bean Validation)
-- Comentários em português misturados com código em inglês
-- Algumas classes de teste com setup manual que poderia usar @TestConfiguration
-- Segurança OAuth2 comentada na classe Application (possível código morto)
-- Dependências com versões antigas que podem ter vulnerabilidades conhecidas
-
-## 14. Observações Relevantes
-
-- O sistema utiliza JDBI ao invés de JPA/Hibernate, o que oferece mais controle sobre SQL mas requer mais código manual
-- Há infraestrutura completa de observabilidade com Prometheus e Grafana configurados
-- O projeto segue padrões do Banco Votorantim com bibliotecas customizadas (bv-security, bv-audit)
-- Existe estrutura para testes de contrato com Pact, mas não há implementação efetiva
-- O sistema está preparado para deployment em OpenShift/Kubernetes (infra-as-code)
-- Há configuração de múltiplos ambientes (local, des, qa, uat, prd)
-- O código possui testes de arquitetura com ArchUnit para validar padrões
-- Sistema utiliza profile spring para diferentes ambientes
-- Há dependências com vulnerabilidades conhecidas que devem ser atualizadas (Spring Security 5.7.13, Tomcat 9.0.x)
+---
+```

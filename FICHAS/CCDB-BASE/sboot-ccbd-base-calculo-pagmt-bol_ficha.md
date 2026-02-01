@@ -1,167 +1,68 @@
-# Ficha Técnica do Sistema
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
+### 1. Descrição Geral
+O sistema é um microserviço desenvolvido em Java utilizando o framework Spring Boot. Ele é responsável por realizar cálculos relacionados ao pagamento de boletos, incluindo descontos, juros, multas e validação de dados do boleto para pagamento.
 
-O sistema **sboot-ccbd-base-calculo-pagmt-bol** é um microserviço Spring Boot responsável por realizar cálculos de pagamento de boletos bancários. Ele valida dados de boletos, calcula valores de juros, multas, descontos e saldo devedor, considerando diferentes modelos de cálculo (recebedora ou destinatário), datas de vencimento, pagamentos parciais, baixas operacionais e efetivas. O serviço integra-se com APIs externas para obter informações sobre dias úteis e feriados, essenciais para os cálculos financeiros.
+### 2. Principais Classes e Responsabilidades
+- **CalcularDescontosServiceImpl**: Implementa a lógica de cálculo de descontos para boletos.
+- **CalcularJurosServiceImpl**: Implementa a lógica de cálculo de juros para boletos.
+- **CalcularMultaServiceImpl**: Implementa a lógica de cálculo de multas para boletos.
+- **CalcularTotalServiceImpl**: Implementa a lógica de cálculo do valor total do boleto, considerando baixas operacionais e efetivas.
+- **CalcularPagmtBoletoController**: Controlador REST que expõe endpoints para validação de boletos.
+- **CalcularPagmtBoletoServiceImpl**: Serviço que coordena o cálculo de pagamento de boletos, integrando os cálculos de descontos, juros, multas e total.
+- **AppProperties**: Classe de configuração que carrega propriedades do aplicativo.
+- **OpenApiConfiguration**: Configuração do Swagger para documentação de APIs.
+- **CalculatorUtil**: Utilitário para operações comuns de cálculo.
+- **DataUtil**: Utilitário para manipulação de datas.
+- **HorarioUtil**: Utilitário para obter a data atual.
 
----
+### 3. Tecnologias Utilizadas
+- Java 11
+- Spring Boot
+- Swagger
+- Lombok
+- Logback
+- Maven
 
-## 2. Principais Classes e Responsabilidades
+### 4. Principais Endpoints REST
+| Método | Endpoint                             | Classe Controladora              | Descrição                                      |
+|--------|--------------------------------------|----------------------------------|------------------------------------------------|
+| POST   | /v1/pagamento-boleto/validar         | CalcularPagmtBoletoController    | Valida os dados do boleto para pagamento.      |
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| `Application` | Classe principal que inicializa a aplicação Spring Boot com segurança OAuth2 habilitada |
-| `CalcularPagmtBoletoController` | Controller REST que expõe o endpoint de validação e cálculo de boletos |
-| `CalcularPagmtBoletoServiceImpl` | Serviço principal que orquestra os cálculos de descontos, juros, multa e total |
-| `CalcularDescontosServiceImpl` | Implementa a lógica de cálculo de descontos conforme regras de negócio |
-| `CalcularJurosServiceImpl` | Implementa a lógica de cálculo de juros (dias corridos ou úteis) |
-| `CalcularMultaServiceImpl` | Implementa a lógica de cálculo de multas |
-| `CalcularTotalServiceImpl` | Calcula o valor total considerando baixas operacionais e efetivas |
-| `ObterDiasUteisServiceImpl` | Integra com serviço externo para obter dias úteis e não úteis |
-| `CalculatorUtil` | Utilitário com funções auxiliares para cálculos e validações |
-| `DataUtil` | Utilitário para manipulação de datas |
-| `HorarioUtil` | Utilitário para obter data atual |
-| `BoletoCalcular` | Entidade de domínio representando os dados de entrada do boleto |
-| `BoletoCalculado` | Entidade de domínio representando o resultado dos cálculos |
+### 5. Principais Regras de Negócio
+- Cálculo de descontos, juros e multas baseado em diferentes modelos de cálculo.
+- Validação de datas de vencimento e transferência para determinar se o boleto está vencido ou inválido.
+- Verificação de duplicidade de pagamento de boletos.
+- Determinação de possibilidade de alteração de valor do pagamento baseado em regras de autorização.
 
----
+### 6. Relação entre Entidades
+- **BoletoCalcular**: Contém informações necessárias para calcular o pagamento de um boleto.
+- **BoletoCalculado**: Representa o resultado do cálculo de um boleto, incluindo valores de desconto, juros, multa e saldo atual.
+- **BaixaEfetiva** e **BaixaOperacional**: Representam informações de baixas relacionadas ao boleto.
+- **CalculoTitulo**: Contém valores de juros, multa, desconto e total a cobrar para um título específico.
+- **Titulo**: Representa um título financeiro com código, data, valor e percentual.
 
-## 3. Tecnologias Utilizadas
+### 7. Estruturas de Banco de Dados Lidas
+Não se aplica.
 
-- **Java 11**
-- **Spring Boot 2.x** (framework principal)
-- **Spring Web** (REST APIs)
-- **Spring Security OAuth2** (autenticação e autorização JWT)
-- **Lombok** (redução de boilerplate)
-- **Springfox Swagger 3.0.0** (documentação OpenAPI)
-- **Logback** com JSON (logging estruturado)
-- **Micrometer Prometheus** (métricas e monitoramento)
-- **RestTemplate** (cliente HTTP para integrações)
-- **Maven** (gerenciamento de dependências)
-- **Docker** (containerização)
-- **JUnit/Mockito** (testes)
+### 8. Estruturas de Banco de Dados Atualizadas
+Não se aplica.
 
----
+### 9. Filas Lidas
+Não se aplica.
 
-## 4. Principais Endpoints REST
+### 10. Filas Geradas
+Não se aplica.
 
-| Método | Endpoint | Classe Controladora | Descrição |
-|--------|----------|---------------------|-----------|
-| POST | `/v1/pagamento-boleto/validar` | `CalcularPagmtBoletoController` | Valida dados do boleto e calcula valores de juros, multa, desconto e saldo devedor |
+### 11. Integrações Externas
+- Integração com serviços externos para obter dias úteis e não úteis através de REST APIs configuradas nas propriedades do aplicativo.
 
----
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
-## 5. Principais Regras de Negócio
+**Justificativa:** O código é bem estruturado e utiliza boas práticas de programação, como injeção de dependências e uso de utilitários para operações comuns. A documentação via Swagger facilita a compreensão dos endpoints disponíveis. Poderia haver melhorias na organização dos pacotes e na documentação interna para aumentar ainda mais a clareza.
 
-1. **Validação de Boleto Vencido**: Boletos vencidos não permitem desconto e podem ter restrições de pagamento dependendo da configuração
-2. **Cálculo de Juros**: Suporta 9 tipos de cálculo (valor fixo, percentual ao dia/mês/ano, dias corridos ou úteis)
-3. **Cálculo de Multa**: Suporta 3 tipos (isento, valor fixo, percentual)
-4. **Cálculo de Desconto**: Suporta 7 tipos de desconto com base em datas e valores/percentuais
-5. **Modelos de Cálculo**: Tipo 01/04 (recebedora - a calcular) e Tipo 02/03 (destinatário - calculado pela CIP)
-6. **Pagamento Parcial**: Controla quantidade de pagamentos parciais permitidos e valores mínimo/máximo
-7. **Baixas Operacionais e Efetivas**: Considera baixas já registradas no cálculo do saldo devedor
-8. **Validação de Data de Agendamento**: Não permite agendamento em data passada ou boleto vencido (exceto fatura de cartão de crédito)
-9. **Bloqueio de Pagamento**: Valida indicadores de bloqueio e situação do título
-10. **Duplicidade de Pagamento**: Impede pagamento de boletos já baixados
-
----
-
-## 6. Relação entre Entidades
-
-- **BoletoCalcular**: Entidade de entrada contendo todos os dados do boleto (beneficiário, pagador, valores, datas, listas de juros/multa/desconto, baixas)
-- **BoletoCalculado**: Entidade de saída com os valores calculados (juros, multa, desconto, saldo atual)
-- **Titulo**: Representa configurações de juros, multa ou desconto (código, data, valor, percentual)
-- **CalculoTitulo**: Representa cálculos pré-definidos pela CIP (modelo 02/03)
-- **BaixaOperacional**: Representa baixas operacionais registradas
-- **BaixaEfetiva**: Representa baixas efetivas confirmadas
-
-**Relacionamentos**:
-- BoletoCalcular possui listas de Titulo (juros, multa, desconto)
-- BoletoCalcular possui lista de CalculoTitulo
-- BoletoCalcular possui listas de BaixaOperacional e BaixaEfetiva
-- BoletoCalculado é gerado a partir de BoletoCalcular após processamento
-
----
-
-## 7. Estruturas de Banco de Dados Lidas
-
-não se aplica
-
----
-
-## 8. Estruturas de Banco de Dados Atualizadas
-
-não se aplica
-
----
-
-## 9. Arquivos Lidos e Gravados
-
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| application.yml | leitura | Spring Boot | Arquivo de configuração da aplicação com profiles (local, des, qa, uat, prd) |
-| logback-spring.xml | leitura | Logback | Configuração de logs em formato JSON |
-| sboot-ccbd-base-calculo-pagmt-bol.yaml | leitura | Swagger Codegen | Especificação OpenAPI para geração de código |
-
----
-
-## 10. Filas Lidas
-
-não se aplica
-
----
-
-## 11. Filas Geradas
-
-não se aplica
-
----
-
-## 12. Integrações Externas
-
-| Sistema Externo | Tipo | Descrição |
-|-----------------|------|-----------|
-| sboot-dcor-base-atom-dias-uteis | API REST | Serviço para obter próxima data útil e listar dias não úteis (feriados). Usado nos cálculos de juros e multa baseados em dias úteis |
-| OAuth2 JWT Provider | API REST | Provedor de autenticação JWT (api-digitaldes.bancovotorantim.com.br ou api-digital.bancovotorantim.com.br) |
-
----
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota: 7/10**
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Boa separação de responsabilidades com camadas bem definidas (presentation, service, calculator, domain)
-- Uso adequado de padrões como Strategy (CalculatorService) e Service Layer
-- Documentação OpenAPI bem estruturada
-- Uso de Lombok reduzindo boilerplate
-- Tratamento de exceções customizadas
-- Configuração externalizada por profiles
-- Logs estruturados em JSON
-
-**Pontos de Melhoria:**
-- Código com comentários em português misturados com código em inglês
-- Métodos muito longos (ex: `validarBoleto` com múltiplas validações inline)
-- Lógica de negócio complexa em switches extensos que poderiam ser refatorados para Strategy Pattern
-- Falta de testes unitários nos arquivos fornecidos (marcados como NAO_ENVIAR)
-- Alguns métodos com responsabilidades múltiplas (ex: `montarBoleto` faz conversão e mapeamento)
-- Uso de `BigDecimal` sem escala consistente em alguns pontos
-- Falta de validação de nulos em alguns fluxos
-- Código com lógica duplicada entre cálculos de juros/multa
-
----
-
-## 14. Observações Relevantes
-
-1. **Segurança**: O sistema utiliza OAuth2 com JWT para autenticação, com endpoints públicos configurados para Swagger
-2. **Ambientes**: Suporta múltiplos ambientes (local, des, qa, uat, prd) com configurações específicas
-3. **Monitoramento**: Expõe métricas Prometheus na porta 9090 e health checks
-4. **Containerização**: Possui Dockerfile configurado para deploy em Google Cloud Platform
-5. **Infraestrutura como Código**: Arquivo infra.yml define configurações de deploy no Kubernetes/OpenShift
-6. **Auditoria**: Integra com biblioteca de trilha de auditoria do Banco Votorantim
-7. **Versionamento**: API versionada (v1) seguindo boas práticas REST
-8. **Cálculos Financeiros**: Utiliza `BigDecimal` com truncamento para 2 casas decimais (RoundingMode.DOWN)
-9. **Dependência Externa Crítica**: O serviço de dias úteis é essencial para cálculos corretos - falhas nessa integração podem impactar o negócio
-10. **Modelo Multi-módulo**: Projeto Maven dividido em módulos `domain` e `application` para melhor organização
+### 13. Observações Relevantes
+- O sistema utiliza OAuth2 para autenticação e segurança dos endpoints.
+- A configuração do Swagger está habilitada apenas para ambientes não produtivos.
+- O projeto está configurado para ser executado em um ambiente de contêiner Docker.

@@ -1,191 +1,154 @@
-# Ficha Técnica do Sistema
+```markdown
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
-Sistema orquestrador responsável por processar e compor informações de extratos bancários a partir de múltiplas fontes (transações efetivadas, contrapartes SPAG e PIX). O sistema consome mensagens de filas Pub/Sub do Google Cloud, enriquece os dados com informações de bancos, tipos de conta e categorização de transações, e publica o extrato composto em um tópico para consumo por outros sistemas.
+### 1. Descrição Geral
+O sistema é um microserviço orquestrador que utiliza Apache Camel para integrar dados entre interfaces SPAG-PIXX, SPAG-BASE e CCBD, enviando-os para uma camada atômica que persiste as movimentações. Ele é responsável por processar e publicar mensagens relacionadas a transações financeiras, contraparte e extratos compostos.
 
-## 2. Principais Classes e Responsabilidades
+### 2. Principais Classes e Responsabilidades
+- **NomeBancoAgregatorStrategy**: Estratégia de agregação para definir o nome do banco em transações.
+- **ContrapartePrecisaDeComposicaoDeInformacaoDeContaBaldePredicate**: Predicate para verificar se uma contraparte precisa de composição de informação de conta balde.
+- **ContraparteValidaParaProcessamentoPredicate**: Predicate para validar se uma contraparte é válida para processamento.
+- **PrecisaAtualizarTiposContaPredicate**: Predicate para verificar se é necessário atualizar tipos de conta.
+- **AdicionarCategoriaTransacaoExtratoCompostoProcessor**: Processador para adicionar categoria de transação ao extrato composto.
+- **AdicionarInformacaoDeContaBaldeParaContraparteProcessor**: Processador para adicionar informações de conta balde à contraparte.
+- **AtualizaListaTipoContaProcessor**: Processador para atualizar lista de tipos de conta.
+- **ContraparteParaListaTipoContaProcessor**: Processador para mapear contraparte para lista de tipos de conta.
+- **MapearContraparteParaExtratoCompostoProcessor**: Processador para mapear contraparte para extrato composto.
+- **MapearContrapartePixParaExtratoCompostoProcessor**: Processador para mapear contraparte Pix para extrato composto.
+- **MapearTransacaoEfetivadaParaExtratoCompostoProcessor**: Processador para mapear transação efetivada para extrato composto.
+- **ObterCodigoBancoProcessor**: Processador para obter código do banco.
+- **ObterCodigoTransacaoProcessor**: Processador para obter código de transação.
+- **ObterISPBBancoProcessor**: Processador para obter ISPB do banco.
+- **BancoBacenRouter**: Roteador para consulta de nome de banco por código.
+- **CategorizacaoRouter**: Roteador para categorização de transações.
+- **ContrapartePixRouter**: Roteador para salvar contraparte Pix.
+- **ContraparteRouter**: Roteador para salvar contraparte.
+- **ParticipanteSPIRouter**: Roteador para consulta de nome de participante SPI por ISPB.
+- **PublicarMensagemExtratoCompostoRouter**: Roteador para publicar mensagem de extrato composto.
+- **TipoContaRouter**: Roteador para consulta de tipos de conta.
+- **TransacaoEfetivadaRouter**: Roteador para salvar transação efetivada.
+- **ContrapartePixService**: Serviço para salvar contraparte Pix.
+- **ContraparteService**: Serviço para salvar contraparte.
+- **TransacaoEfetivadaService**: Serviço para salvar transação efetivada.
+- **TipoContaCache**: Cache para tipos de conta.
+- **AppProperties**: Configurações de propriedades da aplicação.
+- **AuthProperties**: Configurações de autenticação.
+- **ContaBalde**: Propriedades de conta balde.
+- **ContasBaldeProperties**: Configurações de contas balde.
+- **PubSubContraparteConfiguration**: Configuração de Pub/Sub para contraparte.
+- **PubSubContrapartePixConfiguration**: Configuração de Pub/Sub para contraparte Pix.
+- **PubSubProperties**: Configurações de Pub/Sub.
+- **PubSubTransacaoEfetivadaConfiguration**: Configuração de Pub/Sub para transação efetivada.
+- **ExtratoCompostoConfiguration**: Configuração base do extrato composto.
+- **ObjectMapperConfiguration**: Configuração do ObjectMapper.
+- **CanalPagamento**: Representação de canal de pagamento.
+- **ContaCorrente**: Representação de conta corrente.
+- **ContaPessoa**: Representação de conta pessoa.
+- **Contraparte**: Representação de contraparte.
+- **DocumentoOriginal**: Representação de documento original.
+- **Estorno**: Representação de estorno.
+- **Spb**: Representação de SPB.
+- **Status**: Representação de status.
+- **TipoConta**: Representação de tipo de conta.
+- **ContrapartePix**: Representação de contraparte Pix.
+- **DadosBanco**: Representação de dados de banco.
+- **Message**: Representação de mensagem.
+- **CategoriaTransacao**: Representação de categoria de transação.
+- **SubscriptionsFeatureToggle**: Representação de feature toggle de assinaturas.
+- **TransacaoEfetivadaCCBD**: Representação de transação efetivada CCBD.
+- **ActionTypeEnum**: Enumeração de tipos de ação.
+- **CategorizacaoTransacaoEnum**: Enumeração de categorização de transação.
+- **CodigoBancoEnum**: Enumeração de códigos de banco.
+- **ContaBaldeEnum**: Enumeração de conta balde.
+- **ContraparteSaidaOuEntradaEnum**: Enumeração de saída ou entrada de contraparte.
+- **TipoContaContrapartePix**: Enumeração de tipo de conta de contraparte Pix.
+- **TipoMovimentacaoContraparteEnum**: Enumeração de tipo de movimentação de contraparte.
+- **TipoPessoaEnum**: Enumeração de tipo de pessoa.
+- **TipoPessoaTransacaoEnum**: Enumeração de tipo de pessoa em transação.
+- **TipoTransacaoEnum**: Enumeração de tipo de transação.
+- **TpCreditoDebitoEnum**: Enumeração de crédito ou débito.
+- **ContraparteInvalidaException**: Exceção para contraparte inválida.
+- **ExtratoCompostoException**: Exceção para extrato composto.
+- **ListenerContraparte**: Listener para eventos de contraparte.
+- **ListenerContrapartePix**: Listener para eventos de contraparte Pix.
+- **ListenerTransacaoEfetivada**: Listener para eventos de transação efetivada.
+- **CategoriaTransacaoMapper**: Mapper para categoria de transação.
+- **ExtratoCompostoMapper**: Mapper para extrato composto.
+- **FormatarStringMapper**: Mapper para formatação de strings.
+- **TipoContaMapper**: Mapper para tipo de conta.
+- **CategorizacaoTransacaoRepository**: Repositório para categorização de transação.
+- **CategorizacaoTransacaoRepositoryImpl**: Implementação do repositório de categorização de transação.
+- **ConsultaListaBancosBacenRepository**: Repositório para consulta de lista de bancos BACEN.
+- **ConsultaListaBancosBacenRepositoryImpl**: Implementação do repositório de consulta de lista de bancos BACEN.
+- **ConsultaParticipanteSPIRepository**: Repositório para consulta de participante SPI.
+- **ConsultaParticipanteSPIRepositoryImpl**: Implementação do repositório de consulta de participante SPI.
+- **ConsultaTipoContaRepository**: Repositório para consulta de tipo de conta.
+- **ConsultaTipoContaRepositoryImpl**: Implementação do repositório de consulta de tipo de conta.
+- **ConsultaBancoService**: Serviço para consulta de banco.
+- **ConsultaBancoServiceImpl**: Implementação do serviço de consulta de banco.
+- **ConsultaTipoContaService**: Serviço para consulta de tipo de conta.
+- **ConsultaTipoContaServiceImpl**: Implementação do serviço de consulta de tipo de conta.
+- **FeatureToggleService**: Serviço para feature toggle.
+- **FeatureToggleServiceImpl**: Implementação do serviço de feature toggle.
+- **PublicarExtratoCompostoService**: Serviço para publicar extrato composto.
+- **PublicarExtratoCompostoServiceImpl**: Implementação do serviço de publicação de extrato composto.
+- **MessageDeserializer**: Deserializador de mensagens.
+- **PubSubConstants**: Constantes para Pub/Sub.
+- **ValidadorBancoVotorantim**: Validador para banco Votorantim.
+- **ValidadorDadosPessoaDemandanteDaOperacao**: Validador para dados de pessoa demandante da operação.
+- **ValidadorDadosPessoaDemandateDaOperacaoContaInternaBV**: Validador para dados de pessoa demandante da operação em conta interna BV.
+- **ValidadorStatusPagamento**: Validador para status de pagamento.
+- **Validador**: Interface de validador.
+- **Application**: Classe principal da aplicação.
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| **Application** | Classe principal de inicialização do Spring Boot |
-| **ListenerContraparte** | Listener para consumir mensagens de contrapartes SPAG |
-| **ListenerContrapartePix** | Listener para consumir mensagens de contrapartes PIX |
-| **ListenerTransacaoEfetivada** | Listener para consumir mensagens de transações efetivadas |
-| **ContraparteRouter** | Rota Camel para processar contrapartes SPAG |
-| **ContrapartePixRouter** | Rota Camel para processar contrapartes PIX |
-| **TransacaoEfetivadaRouter** | Rota Camel para processar transações efetivadas |
-| **ExtratoCompostoMapper** | Mapeamento de entidades para representação de extrato composto |
-| **CategorizacaoTransacaoEnum** | Enum com regras de categorização de transações |
-| **ConsultaBancoService** | Serviço para consulta de informações de bancos |
-| **PublicarExtratoCompostoService** | Serviço para publicação do extrato composto no Pub/Sub |
-| **TipoContaCache** | Cache em memória para tipos de conta |
-| **FeatureToggleService** | Serviço para controle de feature toggles |
+### 3. Tecnologias Utilizadas
+- Java 11
+- Spring Boot
+- Apache Camel
+- Google Cloud Pub/Sub
+- Maven
 
-## 3. Tecnologias Utilizadas
-- **Spring Boot 2.x** - Framework base
-- **Apache Camel 3.x** - Framework de integração e orquestração
-- **Google Cloud Pub/Sub** - Sistema de mensageria
-- **MapStruct** - Mapeamento de objetos
-- **Lombok** - Redução de boilerplate
-- **Jackson** - Serialização/deserialização JSON
-- **Spring Security OAuth2** - Autenticação e autorização
-- **Logback** - Logging com formato JSON
-- **Maven** - Gerenciamento de dependências
-- **Docker** - Containerização
-- **OpenAPI/Swagger** - Documentação de APIs
-- **Feature Toggle (Unleash)** - Controle de features
+### 4. Principais Endpoints REST
+| Método | Endpoint | Classe Controladora | Descrição |
+|--------|----------|---------------------|-----------|
+| GET | /extratoComposto/{id} | Não se aplica | Busca extrato composto pelo ID. |
+| GET | /extratoComposto | Não se aplica | Busca extratos compostos com filtros. |
 
-## 4. Principais Endpoints REST
-Não se aplica. O sistema é orientado a eventos (event-driven) e não expõe endpoints REST públicos, apenas endpoints de gerenciamento via Actuator (porta 9090).
+### 5. Principais Regras de Negócio
+- Validação de contraparte para processamento.
+- Composição de informações de conta balde.
+- Publicação de mensagens de extrato composto.
+- Categorização de transações financeiras.
 
-## 5. Principais Regras de Negócio
+### 6. Relação entre Entidades
+- **Contraparte**: Relaciona-se com **ContaPessoa**, **Spb**, **Estorno**, e **Status**.
+- **ContrapartePix**: Relaciona-se com **Message**.
+- **TransacaoEfetivadaCCBD**: Relaciona-se com **CategoriaTransacao**.
 
-1. **Validação de Contrapartes**:
-   - Valida status de pagamento (código 3 = confirmado)
-   - Valida dados da pessoa demandante da operação
-   - Rejeita contrapartes do Banco Votorantim (655/161)
-   - Rejeita contrapartes de conta interna BV sem movimentação
+### 7. Estruturas de Banco de Dados Lidas
+Não se aplica.
 
-2. **Categorização de Transações**:
-   - 71 categorias de transações mapeadas por código
-   - Inclui PIX, TED, TEF, boletos, saques, débitos automáticos, tarifas, etc.
+### 8. Estruturas de Banco de Dados Atualizadas
+Não se aplica.
 
-3. **Enriquecimento de Dados**:
-   - Consulta nome de bancos por código BACEN
-   - Consulta participantes SPI por ISPB (para PIX)
-   - Consulta e cache de tipos de conta
-   - Adiciona informações de contas balde quando necessário
+### 9. Filas Lidas
+- **ChannelContraparte**: Canal para mensagens de contraparte.
+- **ChannelContrapartePix**: Canal para mensagens de contraparte Pix.
+- **ChannelTransacaoEfetivada**: Canal para mensagens de transação efetivada.
 
-4. **Composição de Conta Balde**:
-   - Para boletos de tributo e consumo, adiciona dados de conta interna BV
+### 10. Filas Geradas
+- **business-ccbd-base-extrato-composto**: Tópico para publicação de extratos compostos.
 
-5. **Controle por Feature Toggle**:
-   - Subscriptions podem ser habilitadas/desabilitadas individualmente (SPAG, SPAG-PIX, CCBD)
+### 11. Integrações Externas
+- APIs de consulta de bancos BACEN.
+- APIs de consulta de participantes SPI.
+- APIs de consulta de tipos de conta.
 
-6. **Mapeamento de Tipos de Pessoa**:
-   - Identifica tipo de pessoa (F/J) por tamanho do CPF/CNPJ
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
-## 6. Relação entre Entidades
+**Justificativa:** O código está bem estruturado e utiliza boas práticas de programação, como injeção de dependências e uso de interfaces para abstração. No entanto, a documentação poderia ser mais detalhada em algumas partes, e o tratamento de exceções poderia ser mais robusto.
 
-**Entidades Principais**:
-
-- **Contraparte**: Representa uma movimentação de pagamento SPAG
-  - Possui: Debtor (remetente), Creditor (favorecido), SPB, Estorno, Status, CanalPagamento
-  - Relaciona-se com: ContaPessoa, ContaCorrente, TipoConta
-
-- **ContrapartePix**: Representa uma movimentação PIX
-  - Possui: Message (dados da transação PIX)
-  - Contém: dados de pagador e recebedor, valores, datas
-
-- **TransacaoEfetivadaCCBD**: Representa uma transação efetivada no core bancário
-  - Contém: dados da conta, valores, datas, códigos de transação
-
-- **ExtratoCompostoRepresentation**: Entidade de saída unificada
-  - Composta por: Identificador, Transacao, DetalhesTransacao, Categoria
-  - DetalhesTransacao contém: Remetente, Favorecido, DetalhesAdicionais
-
-**Relacionamentos**:
-- Contraparte/ContrapartePix/TransacaoEfetivada → ExtratoCompostoRepresentation (mapeamento)
-- ContaPessoa → TipoConta (consulta e cache)
-- Banco (código) → Nome do Banco (consulta)
-- ISPB → Participante SPI (consulta para PIX)
-
-## 7. Estruturas de Banco de Dados Lidas
-
-Não se aplica. O sistema não acessa diretamente banco de dados, apenas consome mensagens de filas e consulta APIs externas.
-
-## 8. Estruturas de Banco de Dados Atualizadas
-
-Não se aplica. O sistema não persiste dados diretamente em banco de dados.
-
-## 9. Arquivos Lidos e Gravados
-
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| logback-spring.xml | Leitura | Configuração Spring Boot | Configuração de logs em formato JSON |
-| application.yml | Leitura | Configuração Spring Boot | Configurações da aplicação por ambiente |
-| layers.xml | Leitura | Build Maven | Configuração de camadas para otimização de imagem Docker |
-
-## 10. Filas Lidas
-
-**Google Cloud Pub/Sub - Subscriptions:**
-
-1. **business-ccbd-base-transacoes-efetivadas-extrato-composto-sub**
-   - Consome: Transações efetivadas do core bancário
-   - Listener: ListenerTransacaoEfetivada
-   - Formato: TransacaoEfetivadaCCBD (JSON)
-
-2. **business-spag-base-notificacao-extrato-composto-sub**
-   - Consome: Contrapartes de pagamentos SPAG
-   - Listener: ListenerContraparte
-   - Formato: Contraparte (JSON)
-
-3. **business-spag-pixx-extrato-composto-sub**
-   - Consome: Contrapartes de transações PIX
-   - Listener: ListenerContrapartePix
-   - Formato: ContrapartePix (JSON)
-
-## 11. Filas Geradas
-
-**Google Cloud Pub/Sub - Topics:**
-
-1. **business-ccbd-base-extrato-composto**
-   - Publica: Extratos compostos processados
-   - Service: PublicarExtratoCompostoService
-   - Formato: ExtratoCompostoRepresentation (JSON)
-
-## 12. Integrações Externas
-
-| Sistema | Tipo | Descrição |
-|---------|------|-----------|
-| **sboot-glob-base-atom-lista-bancos** | REST API | Consulta lista de bancos BACEN para obter nome do banco por código |
-| **sboot-glob-base-atom-cliente-dados-cadastrais** | REST API | Consulta tipos de conta disponíveis no sistema |
-| **sboot-spag-pixx-atom-participantes** | REST API | Consulta participantes do SPI (Sistema de Pagamentos Instantâneos) por ISPB |
-| **API Gateway OAuth** | REST API | Autenticação para chamadas às APIs internas |
-| **Feature Toggle Service** | Serviço | Controle de habilitação/desabilitação de subscriptions |
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota: 8/10**
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Arquitetura bem estruturada com separação clara de responsabilidades (listeners, routers, processors, services)
-- Uso adequado de padrões de projeto (Strategy, Builder, Mapper)
-- Boa cobertura de testes unitários
-- Uso de Apache Camel para orquestração de forma apropriada
-- Implementação de cache para otimização de consultas
-- Validações de negócio bem encapsuladas em classes específicas
-- Configuração externalizada por ambiente
-- Logging estruturado em JSON
-- Uso de feature toggles para controle de funcionalidades
-
-**Pontos de Melhoria:**
-- Enum CategorizacaoTransacaoEnum muito extenso (71 categorias) poderia ser externalizado em configuração
-- Algumas classes de mapeamento (ExtratoCompostoMapper) são muito complexas e poderiam ser divididas
-- Falta documentação JavaDoc em algumas classes críticas
-- Alguns métodos muito longos que poderiam ser refatorados
-- Poderia ter mais uso de constantes para valores mágicos
-
-## 14. Observações Relevantes
-
-1. **Arquitetura Event-Driven**: Sistema totalmente orientado a eventos, sem endpoints REST expostos para processamento de negócio.
-
-2. **Processamento Assíncrono**: Utiliza Google Cloud Pub/Sub com acknowledgment manual para garantir processamento confiável.
-
-3. **Resiliência**: Implementa validações e tratamento de erros para evitar processamento de mensagens inválidas.
-
-4. **Multi-tenant**: Suporta múltiplos bancos (BV S.A. - 413/436 e Votorantim - 655/161).
-
-5. **Ambientes**: Configurado para DES, UAT e PRD com diferentes projetos GCP.
-
-6. **Monitoramento**: Expõe métricas via Actuator (porta 9090) incluindo health checks e Prometheus.
-
-7. **Segurança**: Utiliza OAuth2 JWT para autenticação nas chamadas de APIs internas.
-
-8. **Performance**: Implementa cache em memória para tipos de conta, reduzindo chamadas externas.
-
-9. **Observabilidade**: Logs estruturados em JSON com correlation ID e tracing distribuído via Spring Cloud Sleuth.
-
-10. **Containerização**: Preparado para deploy em Kubernetes/OpenShift com configuração de layers otimizada.
+### 13. Observações Relevantes
+O sistema utiliza feature toggles para controlar o comportamento de assinaturas de mensagens, permitindo flexibilidade na ativação ou desativação de funcionalidades.
+```

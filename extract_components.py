@@ -130,7 +130,8 @@ SIGLAS_DESC = {
     "SPAG-PIXX": "Sistema de Pagamentos - PIX",
     "SPAG-SPIB": "Sistema de Pagamentos - SPIB",
     "SPBB-BASE": "SPB Bradesco - Base",
-    "SPBB-ISPB": "SPB Bradesco - ISPB"
+    "SPBB-ISPB": "SPB Bradesco - ISPB",
+    "PROJETOS_VISUAL_BASIC": "Projetos Visual Basic"
 }
 
 
@@ -235,6 +236,213 @@ def extract_technology(file_path, component_name):
 
     except Exception as e:
         return "Desconhecido"
+
+
+def extract_function(file_path, component_name):
+    """Extrai uma descrição funcional curta e direta do componente."""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # 1. Extrair descrição geral
+        desc_match = re.search(
+            r'###?\s*1\.?\s*Descrição Geral\s*\n+(.+?)(?=\n##|\n###|\n---|\Z)',
+            content, re.DOTALL | re.IGNORECASE
+        )
+
+        if not desc_match:
+            return infer_function_from_name(component_name)
+
+        desc = desc_match.group(1).strip()
+
+        # Pegar as duas primeiras sentenças
+        sentences = re.split(r'(?<=[.!?])\s+', desc)
+        raw_text = ' '.join(sentences[:2]) if sentences else desc
+
+        # 2. Limpar termos técnicos de forma agressiva
+        cleanups = [
+            # Remover nomes do sistema entre aspas ou negrito
+            (r'^O sistema "[^"]+" é ', ''),
+            (r'^O sistema \*\*[^*]+\*\* é ', ''),
+            (r'^O \*\*[^*]+\*\* é ', ''),
+            (r'O sistema "[^"]+" é ', ''),
+
+            # Remover frases técnicas introdutórias
+            (r'^O sistema é um[a]? ', ''),
+            (r'^Este sistema é ', ''),
+            (r'^Trata-se de um[a]? ', ''),
+            (r'^Sistema de ', ''),
+            (r'^Projeto ', ''),
+            (r'^Componente ', ''),
+            (r'^Serviço ', ''),
+            (r'^Microserviço ', ''),
+            (r'^Aplicação ', ''),
+            (r'^Aplicativo ', ''),
+            (r'^Um processador ', 'Processador de '),
+            (r'^Processamento processamento', 'Processamento'),
+
+            # Remover descrições técnicas
+            (r'desenvolvid[oa] em [^,\.]+[,\.]?\s*', ''),
+            (r'utilizando o? ?framework [^,\.]+[,\.]?\s*', ''),
+            (r'em arquitetura de microserviços[^,\.]*[,\.]?\s*', ''),
+            (r'que utiliza o framework [^,\.]+[,\.]?\s*', ''),
+            (r'Ele utiliza o framework [^,\.]+[,\.]?\s*', ''),
+            (r'para gerenciamento de dependências[^,\.]*[,\.]?\s*', ''),
+            (r'e construção[,\.]?\s*', ''),
+            (r'para gerenciar recursos e o\s*$', ''),
+
+            # Remover tecnologias e frameworks
+            (r'\bSpring Boot[^,\.]*', ''),
+            (r'\bSpring Batch[^,\.]*', ''),
+            (r'\bSpring\b', ''),
+            (r'\bJava EE[^,\.]*', ''),
+            (r'\bAngular[^,\.]*', ''),
+            (r'\bMaven[^,\.]*', ''),
+            (r'\bJava\b(?!\s+que)', ''),  # Remove Java sozinho mas não "Java que"
+            (r'\(\)', ''),  # Remove parênteses vazios
+
+            # Remover termos vagos
+            (r'\bstateless\b', ''),
+            (r'\bbatch\b', ''),
+            (r'\bAPIs? REST\b', ''),
+
+            # Remover texto em negrito mas manter conteúdo
+            (r'\*\*([^*]+)\*\*', r'\1'),
+
+            # Remover "Ele é responsável" e variações
+            (r'^[Éé] responsável por ', ''),
+            (r'^responsável por ', ''),
+            (r'^Ele é responsável por ', ''),
+            (r'^Ele é responsável pelo ', ''),
+            (r'^que é responsável por ', ''),
+            (r'Ele é responsável por ', ''),
+            (r'^Ele processa ', 'Processa '),
+            (r'^Ele lê ', 'Lê '),
+            (r'^Ele realiza ', 'Realiza '),
+            (r'^Em Java que ', ''),
+            (r'^que realiza ', 'Realiza '),
+            (r'^que processa ', 'Processa '),
+            (r'^que executa ', 'Executa '),
+            (r'^Que automatiza ', 'Automatiza '),
+            (r'^Que realiza ', 'Realiza '),
+            (r'^Que executa ', 'Executa '),
+            (r'^Um componente que ', ''),
+            (r'^Um projeto ', ''),
+            (r'^Um aplicativo que ', ''),
+            (r'Processador de desenvolvido', 'Processador desenvolvido'),
+            (r'utilizando um para ', 'para '),
+            (r'\. e integra-se', ', integra-se'),
+            (r'\. e RabbitMQ', ' com RabbitMQ'),
+            (r'Ele processa ', 'Processa '),
+
+            # Limpar espaços e pontuação extras
+            (r'\s+', ' '),
+            (r'^\s*[,\.]\s*', ''),
+            (r'\s*[,\.]\s*$', ''),
+            (r'^\s+', ''),
+            (r'\s+$', ''),
+        ]
+
+        function_text = raw_text
+        for pattern, replacement in cleanups:
+            function_text = re.sub(pattern, replacement, function_text, flags=re.IGNORECASE)
+
+        # Normalizar espaços
+        function_text = re.sub(r'\s+', ' ', function_text).strip()
+
+        # Capitalizar primeira letra
+        if function_text and len(function_text) > 1:
+            function_text = function_text[0].upper() + function_text[1:]
+
+        # Se ficou muito curto ou sem conteúdo útil, usar inferência
+        if len(function_text) < 25 or function_text.lower().startswith('de '):
+            return infer_function_from_name(component_name)
+
+        # Limitar tamanho
+        if len(function_text) > 150:
+            function_text = function_text[:147]
+            last_space = function_text.rfind(' ')
+            if last_space > 100:
+                function_text = function_text[:last_space] + '...'
+            else:
+                function_text = function_text + '...'
+
+        return function_text.strip()
+
+    except Exception as e:
+        return infer_function_from_name(component_name)
+
+
+def infer_object_from_name(component_name):
+    """Infere o objeto/entidade principal do nome do componente."""
+    name = component_name.lower()
+
+    # Mapeamento de palavras-chave para objetos
+    mappings = {
+        'pagamento': 'pagamentos',
+        'pagmt': 'pagamentos',
+        'transf': 'transferências',
+        'ted': 'transferências TED',
+        'tef': 'transferências TEF',
+        'pix': 'transações PIX',
+        'boleto': 'boletos',
+        'bol': 'boletos',
+        'tributo': 'tributos',
+        'tribut': 'tributos',
+        'tarifa': 'tarifas',
+        'tarif': 'tarifas',
+        'extrato': 'extratos',
+        'saldo': 'saldos',
+        'limite': 'limites',
+        'agendamento': 'agendamentos',
+        'agendmt': 'agendamentos',
+        'notifica': 'notificações',
+        'dda': 'boletos DDA',
+        'conta': 'contas',
+        'cliente': 'clientes',
+        'favorecido': 'favorecidos',
+        'contato': 'contatos',
+        'debito': 'débitos',
+        'credito': 'créditos',
+        'estorno': 'estornos',
+        'devolucao': 'devoluções',
+        'comprovante': 'comprovantes',
+        'relatorio': 'relatórios',
+        'qrcode': 'QR Codes',
+        'chave': 'chaves',
+        'dict': 'chaves DICT',
+    }
+
+    for key, value in mappings.items():
+        if key in name:
+            return value
+
+    return 'transações'
+
+
+def infer_function_from_name(component_name):
+    """Infere a função do componente baseado no nome."""
+    name = component_name.lower()
+
+    # Identificar tipo de componente pelo prefixo
+    tipo = ""
+    if '-atom-' in name:
+        tipo = "Serviço atômico para"
+    elif '-orch-' in name:
+        tipo = "Orquestrador de"
+    elif 'batch' in name:
+        tipo = "Processamento batch de"
+    elif '-acl-' in name:
+        tipo = "Camada de integração para"
+    elif '-bff-' in name:
+        tipo = "Backend for Frontend de"
+    elif name.startswith('ang-'):
+        tipo = "Interface web para"
+    else:
+        tipo = "Gerenciamento de"
+
+    obj = infer_object_from_name(component_name)
+    return f"{tipo} {obj}"
 
 
 def classify_domain(description, component_name):
@@ -354,6 +562,7 @@ def main():
         for ficha_file in sorted(sigla_dir.glob("*.md")):
             component_name = ficha_file.stem.replace("_ficha", "")
             description = extract_description(ficha_file)
+            function = extract_function(ficha_file, component_name)
             technology = extract_technology(ficha_file, component_name)
             domain = classify_domain(description, component_name)
 
@@ -361,6 +570,7 @@ def main():
                 "Sigla": sigla,
                 "Descrição da Sigla": sigla_desc,
                 "Componente": component_name,
+                "Função": function,
                 "Descrição do Componente": description,
                 "Tecnologia": technology,
                 "Domínio Funcional": domain
@@ -369,7 +579,7 @@ def main():
     # Escrever CSV com BOM para Excel reconhecer UTF-8 corretamente
     with open(output_file, 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.DictWriter(f, fieldnames=[
-            "Sigla", "Descrição da Sigla", "Componente",
+            "Sigla", "Descrição da Sigla", "Componente", "Função",
             "Descrição do Componente", "Tecnologia", "Domínio Funcional"
         ])
         writer.writeheader()

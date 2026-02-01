@@ -1,159 +1,69 @@
-# Ficha Técnica do Sistema
+```markdown
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
+### 1. Descrição Geral
+O sistema é um serviço atômico de consulta de contas Fintech, desenvolvido para realizar operações de consulta de dados de contas e usuários associados a essas contas. Ele utiliza o Spring Boot para criar endpoints REST que permitem a interação com o banco de dados SQL Server, fornecendo informações detalhadas sobre contas e usuários.
 
-Sistema atômico de consulta de contas Fintech do Banco Votorantim. O serviço expõe APIs REST para consultar informações completas de contas de usuários da Fintech, incluindo dados da conta, usuários vinculados e contas de pagamento associadas (CP1/CP2). Utiliza arquitetura hexagonal (ports and adapters) com separação clara entre camadas de domínio, aplicação e infraestrutura.
+### 2. Principais Classes e Responsabilidades
+- **Application**: Classe principal que inicia a aplicação Spring Boot.
+- **ConsultaContaFintechConfiguration**: Configurações de beans para Jdbi, plugins, e mapeadores de linha.
+- **OpenApiConfiguration**: Configuração do Swagger para documentação de APIs.
+- **RestResponseEntityExceptionHandler**: Manipulador de exceções personalizadas para respostas HTTP.
+- **FintechAccountRepositoryImpl**: Implementação do repositório de contas Fintech, responsável por consultas SQL.
+- **FintechAccountService**: Serviço que contém a lógica de negócios para consulta de contas e usuários.
+- **FintechAccountController**: Controlador REST que expõe endpoints para consulta de contas Fintech.
+- **Conta, DadosConta, DadosContaCompleta, Usuario**: Classes de domínio que representam entidades do sistema.
 
-## 2. Principais Classes e Responsabilidades
+### 3. Tecnologias Utilizadas
+- Java 11
+- Spring Boot
+- Jdbi
+- SQL Server
+- Swagger
+- Docker
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| `Application` | Classe principal Spring Boot que inicializa a aplicação |
-| `FintechAccountController` | Controller REST que expõe endpoints de consulta de contas |
-| `FintechAccountService` | Serviço de domínio com regras de negócio para consulta de contas |
-| `FintechAccountRepository` | Interface (port) que define operações de acesso a dados |
-| `FintechAccountRepositoryImpl` | Implementação do repositório usando JDBI para acesso ao SQL Server |
-| `ConsultaContaFintechConfiguration` | Configuração Spring para beans, datasource e validação |
-| `RestResponseEntityExceptionHandler` | Tratamento centralizado de exceções da API |
-| `DadosContaCompletaMapper` | Mapper para conversão de entidades de domínio em DTOs de resposta |
-| `DadosContaCompletaReducer` | Reducer JDBI para agregação de resultados de queries com joins |
-| `DadosConta`, `DadosContaCompleta` | Entidades de domínio representando dados de conta |
-| `Conta`, `Usuario` | Entidades de domínio para contas e usuários |
+### 4. Principais Endpoints REST
+| Método | Endpoint                          | Classe Controladora          | Descrição                                          |
+|--------|-----------------------------------|------------------------------|----------------------------------------------------|
+| POST   | /v1/consultaContaUsuarioFintech   | FintechAccountController     | Consulta completa de conta de usuário Fintech.     |
 
-## 3. Tecnologias Utilizadas
+### 5. Principais Regras de Negócio
+- Consulta de contas e usuários deve retornar apenas contas ativas.
+- Manipulação de exceções para erros de servidor e não encontrados.
+- Validação de agência e conta antes de realizar consultas.
 
-- **Framework**: Spring Boot 2.x
-- **Linguagem**: Java 11
-- **Persistência**: JDBI 3.9.1 (SQL Object)
-- **Banco de Dados**: Microsoft SQL Server (driver 7.4.0.jre11)
-- **Documentação API**: Swagger/OpenAPI 2.9.2
-- **Segurança**: Spring Security OAuth2 (Resource Server com JWT)
-- **Métricas**: Spring Actuator + Micrometer + Prometheus
-- **Auditoria**: BV Audit 2.2.1
-- **Build**: Maven
-- **Containerização**: Docker
-- **Logging**: Logback com formato JSON
-- **Testes**: JUnit 5, Rest Assured, Pact (contract testing)
+### 6. Relação entre Entidades
+- **Conta**: Relacionada a **DadosContaCompleta** e **DadosConta**.
+- **Usuario**: Relacionado a **DadosContaCompleta**.
+- **DadosContaCompleta**: Contém listas de **Conta** e **Usuario**.
 
-## 4. Principais Endpoints REST
+### 7. Estruturas de Banco de Dados Lidas
+| Nome da Tabela/View/Coleção | Tipo       | Operação (SELECT/READ) | Breve Descrição                                      |
+|-----------------------------|------------|------------------------|------------------------------------------------------|
+| TbContaUsuarioFintech       | tabela     | SELECT                 | Tabela principal de contas de usuários Fintech.      |
+| TbParametroPagamentoFintech | tabela     | SELECT                 | Tabela de parâmetros de pagamento Fintech.           |
+| TbUsuarioContaFintech       | tabela     | SELECT                 | Tabela de usuários associados a contas Fintech.      |
+| TbContaPagamentoFintech     | tabela     | SELECT                 | Tabela de contas de pagamento Fintech.               |
 
-| Método | Endpoint | Classe Controladora | Descrição |
-|--------|----------|---------------------|-----------|
-| POST | `/v1/consultaContaUsuarioFintech` | `FintechAccountController` | Consulta dados completos de conta Fintech (versão atual) |
-| POST | `/consultaContaUsuarioFintech` | `FintechAccountController` | Consulta dados de conta Fintech (versão deprecated) |
+### 8. Estruturas de Banco de Dados Atualizadas
+Não se aplica.
 
-**Request Body**: `ContaRequest` com `numeroConta` e `numeroAgencia`
+### 9. Filas Lidas
+Não se aplica.
 
-**Response**: `DadosContaResponse` com informações completas da conta, lista de contas associadas e lista de usuários
+### 10. Filas Geradas
+Não se aplica.
 
-## 5. Principais Regras de Negócio
+### 11. Integrações Externas
+- Integração com API de autenticação OAuth2 para segurança dos endpoints.
 
-1. **Validação de Agência**: Se a agência for nula ou "0", é tratada como string vazia na consulta
-2. **Filtro de Status**: Apenas contas com `statusConta = 2` (ativa) são retornadas
-3. **Conta Não Encontrada**: Lança `NotFoundException` quando não há resultados ou nenhuma conta ativa
-4. **Tratamento de Erros**: Erros de banco de dados são convertidos em `InternalServerErrorException`
-5. **Agregação de Dados**: A consulta completa agrega dados de múltiplas tabelas (conta, usuários, contas de pagamento) em uma única resposta
-6. **Trim de Strings**: Campos de texto são automaticamente trimados antes de retornar na resposta
-7. **Deduplicação**: O reducer garante que não haja duplicação de contas e usuários na resposta
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
-## 6. Relação entre Entidades
+**Justificativa:** O código é bem estruturado e segue boas práticas de desenvolvimento, como uso de injeção de dependências e separação de responsabilidades. A documentação via Swagger facilita a compreensão dos endpoints disponíveis. No entanto, poderia haver mais comentários explicativos em partes críticas do código.
 
-**Modelo de Domínio:**
-
-- `DadosContaCompleta` (entidade principal)
-  - Contém: numeroConta, numeroAgencia, statusConta, codigoClienteGlobal, razaoSocial, tipoPessoa, numeroDocumento, statusFintech, dtAberturaConta
-  - Possui lista de `Conta` (1:N)
-  - Possui lista de `Usuario` (1:N)
-
-- `Conta`
-  - Representa contas de pagamento (CP1/CP2)
-  - Atributos: numeroConta, numeroAgencia, tipoConta, descricaoConta
-
-- `Usuario`
-  - Representa usuários vinculados à conta
-  - Atributos: tipoPessoa, codigoTipoVinculo, numeroDocumento, nome
-
-**Relacionamentos no Banco:**
-- TbContaUsuarioFintech (1) ←→ (N) TbRelacaoContaUsuarioFintech ←→ (1) TbUsuarioContaFintech
-- TbContaUsuarioFintech (N) ←→ (1) TbParametroPagamentoFintech ←→ (1:N) TbContaPagamentoFintech
-
-## 7. Estruturas de Banco de Dados Lidas
-
-| Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
-|------------------------------|------|----------|-----------------|
-| TbContaUsuarioFintech | Tabela | SELECT | Tabela principal de contas de usuários Fintech |
-| TbParametroPagamentoFintech | Tabela | SELECT | Parâmetros de pagamento associados às contas |
-| TbRelacaoContaUsuarioFintech | Tabela | SELECT | Relacionamento entre contas e usuários |
-| TbUsuarioContaFintech | Tabela | SELECT | Dados dos usuários vinculados às contas |
-| TbTipoVinculoConta | Tabela | SELECT | Tipos de vínculo dos usuários com as contas |
-| TbContaPagamentoFintech | Tabela | SELECT | Contas de pagamento (CP1/CP2) da Fintech |
-
-## 8. Estruturas de Banco de Dados Atualizadas
-
-não se aplica
-
-## 9. Arquivos Lidos e Gravados
-
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| application.yml | Leitura | Spring Boot | Configurações da aplicação por ambiente |
-| logback-spring.xml | Leitura | Logback | Configuração de logs (console e JSON) |
-| messages.properties | Leitura | MessageSource | Mensagens de erro internacionalizadas |
-| consultaContaCompleta.sql | Leitura | FintechAccountRepositoryImpl | Query SQL para consulta completa de conta |
-| consultaContaFintech.sql | Leitura | FintechAccountRepositoryImpl | Query SQL para consulta de contas Fintech |
-| consultaContaUsuario.sql | Leitura | FintechAccountRepositoryImpl | Query SQL para consulta de dados de conta |
-| consultaUsuariosConta.sql | Leitura | FintechAccountRepositoryImpl | Query SQL para consulta de usuários da conta |
-
-## 10. Filas Lidas
-
-não se aplica
-
-## 11. Filas Geradas
-
-não se aplica
-
-## 12. Integrações Externas
-
-| Sistema/Serviço | Tipo | Descrição |
-|-----------------|------|-----------|
-| SQL Server (DBSPAG) | Banco de Dados | Banco de dados principal com tabelas de contas Fintech |
-| OAuth2 JWT Provider | Autenticação | Validação de tokens JWT via JWK endpoint (api-uat.bancovotorantim.com.br ou api.bancovotorantim.com.br) |
-| Prometheus | Métricas | Exportação de métricas via endpoint /actuator/prometheus |
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota:** 8/10
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Arquitetura hexagonal bem implementada com separação clara de responsabilidades (domain, application, infrastructure)
-- Uso adequado de padrões como Repository, Service, Mapper e DTO
-- Tratamento de exceções centralizado e consistente
-- Configuração externalizada por ambiente
-- Boa cobertura de testes (unitários, integração, funcionais, contract tests)
-- Uso de Lombok reduzindo boilerplate
-- Documentação OpenAPI/Swagger
-- Observabilidade com métricas e health checks
-- Segurança com OAuth2/JWT
-
-**Pontos de Melhoria:**
-- Método `consultaContaUsuarioFintech` marcado como deprecated mas ainda presente (deveria ser removido em versão futura)
-- Conversão de String para JSON no log poderia usar biblioteca específica ao invés de try-catch genérico
-- Algumas queries SQL poderiam ser otimizadas (múltiplos JOINs)
-- Falta de paginação nas consultas que retornam listas
-- Validação de entrada (ContaRequest) poderia ser mais robusta com Bean Validation
-- Código de configuração poderia ser simplificado com uso de @ConfigurationProperties
-
-## 14. Observações Relevantes
-
-1. **Versão Deprecated**: Existe uma versão antiga do endpoint de consulta marcada como `@Deprecated`, indicando migração para nova versão com query otimizada
-2. **Segurança**: Aplicação configurada como Resource Server OAuth2, requerendo token JWT válido para acesso
-3. **Multi-ambiente**: Configuração preparada para múltiplos ambientes (local, des, qa, uat, prd)
-4. **Auditoria**: Integração com biblioteca de auditoria BV para trilha de eventos
-5. **Métricas**: Stack completa de observabilidade com Prometheus e Grafana configurados
-6. **Containerização**: Dockerfile otimizado usando OpenJ9 Alpine para redução de footprint
-7. **CI/CD**: Configuração Jenkins presente (jenkins.properties) para pipeline automatizado
-8. **Infraestrutura como Código**: Arquivo infra.yml com configurações Kubernetes/OpenShift
-9. **Connection Pool**: HikariCP configurado com pool de 20 conexões máximas e 10 mínimas
-10. **Encoding**: Queries SQL configuradas com `sendStringParametersAsUnicode=false` para otimização
+### 13. Observações Relevantes
+- O sistema utiliza o Prometheus e Grafana para monitoramento e geração de métricas customizadas.
+- A configuração do Dockerfile permite fácil implantação do serviço em ambientes de contêiner.
+- A documentação do projeto está bem detalhada no README.md, com instruções claras para inicialização e uso do serviço.
+```

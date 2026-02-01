@@ -1,198 +1,78 @@
-# Ficha Técnica do Sistema
+## Ficha Técnica do Sistema
 
----
+### 1. Descrição Geral
+O sistema "springboot-intb-onda-bureau-beneficiarios" é uma aplicação Java desenvolvida com o framework Spring Boot. Seu objetivo é fornecer um serviço REST para consulta de sócios de empresas, integrando-se com serviços externos de crédito e bureau para obter informações detalhadas sobre os sócios.
 
-## 1. Descrição Geral
+### 2. Principais Classes e Responsabilidades
+- **HelloService**: Serviço que retorna uma mensagem de saudação.
+- **ObterSociosService**: Serviço responsável por consultar e obter informações sobre sócios de empresas.
+- **DocketConfiguration**: Configuração do Swagger para documentação de APIs.
+- **WebServiceTemplateConfiguration**: Configuração de templates para chamadas a serviços web.
+- **ConsultaSocios**: Classe de domínio que representa uma consulta de sócios.
+- **DetalhesSocio**: Classe de domínio que representa os detalhes de um sócio.
+- **BusinessException**: Classe de exceção para erros de negócio.
+- **DetalhesSocioRowMapper**: Mapper para mapear resultados de consultas SQL para objetos DetalhesSocio.
+- **BureauCreditoRepository**: Repositório para integração com o serviço de crédito bureau.
+- **SocioRepository**: Repositório para consulta de sócios no banco de dados.
+- **ListaSocioRepresentation**: Representação de uma lista de sócios.
+- **ObterSociosRequestRepresentation**: Representação de uma requisição para obter sócios.
+- **ObterSociosResponseRepresentation**: Representação de uma resposta com informações de sócios.
+- **SocioRepresentation**: Representação de um sócio.
+- **HelloApi**: API REST para expor um serviço de saudação.
+- **ObterSociosApi**: API REST para obter informações de sócios.
+- **Sanitizador**: Utilitário para sanitização de entradas.
+- **StringUtils**: Utilitário para manipulação de strings.
+- **ValidaCNPJ**: Utilitário para validação de CNPJ.
+- **Server**: Classe principal para inicialização da aplicação Spring Boot.
 
-O sistema **springboot-intb-onda-bureau-beneficiarios** é uma API REST desenvolvida em Spring Boot que tem como objetivo consultar informações de sócios de empresas através de integração com o serviço de Bureau de Crédito (Serasa). O sistema realiza consultas recursivas para obter a estrutura societária completa de uma empresa a partir de seu CNPJ, navegando pela hierarquia de participações societárias e armazenando os dados consultados em um banco de dados Sybase. A aplicação também oferece um endpoint de exemplo (Hello World) para fins de referência.
+### 3. Tecnologias Utilizadas
+- Spring Boot
+- Swagger
+- Sybase JDBC
+- Apache Commons
+- JUnit
+- Mockito
+- Docker
+- Prometheus
+- Grafana
 
----
+### 4. Principais Endpoints REST
+| Método | Endpoint       | Classe Controladora | Descrição                              |
+|--------|----------------|---------------------|----------------------------------------|
+| GET    | /hello         | HelloApi            | Retorna uma mensagem de saudação.      |
+| POST   | /obterSocios   | ObterSociosApi      | Obtém informações sobre sócios.        |
 
-## 2. Principais Classes e Responsabilidades
+### 5. Principais Regras de Negócio
+- Limite de consultas a sócios definido por configuração.
+- Validação de CNPJ antes de realizar consultas.
+- Integração com serviços externos para obtenção de informações de crédito e restrições.
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| **Server.java** | Classe principal que inicializa a aplicação Spring Boot |
-| **ObterSociosService.java** | Serviço principal que orquestra a consulta recursiva de sócios, controlando o limite de consultas e a navegação pela hierarquia societária |
-| **HelloService.java** | Serviço de exemplo que retorna uma mensagem de saudação |
-| **BureauCreditoRepository.java** | Repositório responsável por realizar chamadas ao serviço SOAP de Bureau de Crédito (Serasa) |
-| **SocioRepository.java** | Repositório que consulta dados de sócios no banco de dados Sybase (tabela TbSerasaPjCTSocietarioDetalhe) |
-| **ObterSociosApi.java** | Controller REST que expõe o endpoint POST /obterSocios |
-| **HelloApi.java** | Controller REST de exemplo que expõe o endpoint GET /hello |
-| **DetalhesSocio.java** | Entidade de domínio que representa os dados de um sócio |
-| **ConsultaSocios.java** | Objeto de domínio que controla o estado da consulta recursiva (quantidade de consultas e resultados) |
-| **ValidaCNPJ.java** | Utilitário para validação de CNPJ |
-| **Sanitizador.java** | Utilitário para sanitização de inputs (logs seguros) |
-| **DetalhesSocioRowMapper.java** | Mapper JDBC para conversão de ResultSet em objetos DetalhesSocio |
-| **DocketConfiguration.java** | Configuração do Swagger/OpenAPI |
-| **WebServiceTemplateConfiguration.java** | Configuração do cliente SOAP (WebServiceTemplate) |
+### 6. Relação entre Entidades
+- **ConsultaSocios** possui uma coleção de **DetalhesSocio**.
+- **DetalhesSocio** contém informações detalhadas sobre cada sócio, como CNPJ, nome, participação, etc.
 
----
-
-## 3. Tecnologias Utilizadas
-
-- **Spring Boot 2.x** (framework principal)
-- **Spring Web** (REST APIs)
-- **Spring Web Services** (cliente SOAP)
-- **Spring Security** (autenticação básica e LDAP)
-- **Spring JDBC** (acesso a banco de dados)
-- **Sybase jConnect 4** (driver JDBC para Sybase)
-- **Swagger/Springfox 3.0.0** (documentação de API)
-- **Micrometer + Prometheus** (métricas)
-- **Spring Actuator** (health checks e monitoramento)
-- **Apache CXF** (geração de código a partir de WSDL)
-- **JUnit 5 + Mockito** (testes unitários)
-- **JMeter** (testes funcionais)
-- **Docker** (containerização)
-- **Maven** (gerenciamento de dependências)
-- **Logback** (logging em formato JSON)
-- **Bibliotecas BV**: springboot-arqt-base-trilha-auditoria-web, springboot-arqt-base-security-basic, sbootlib-arqt-base-tracing
-
----
-
-## 4. Principais Endpoints REST
-
-| Método | Endpoint | Classe Controladora | Descrição |
-|--------|----------|---------------------|-----------|
-| GET | /hello | HelloApi | Endpoint de exemplo que retorna uma mensagem de saudação personalizada |
-| POST | /obterSocios | ObterSociosApi | Endpoint principal que recebe um CNPJ e retorna a estrutura completa de sócios da empresa |
-
----
-
-## 5. Principais Regras de Negócio
-
-1. **Consulta Recursiva de Sócios**: O sistema realiza consultas recursivas para obter toda a cadeia societária de uma empresa, navegando pelos CNPJs dos sócios que são pessoas jurídicas.
-
-2. **Limite de Consultas**: Existe um limite configurável (padrão: 500 consultas) para evitar loops infinitos ou consultas excessivas na estrutura societária.
-
-3. **Complementação de CNPJ**: Como o bureau não armazena a parte matriz/filial do CNPJ (4 dígitos), o sistema tenta todas as combinações de 0001 a 9999 até encontrar um CNPJ válido.
-
-4. **Carência de Consulta**: Existe um período de carência configurável (padrão: 30 dias) para reutilização de consultas anteriores no bureau.
-
-5. **Validação de CNPJ**: O sistema valida CNPJs antes de processá-los, incluindo verificação de dígitos verificadores.
-
-6. **Sanitização de Logs**: Todos os dados sensíveis são sanitizados antes de serem registrados em logs.
-
-7. **Controle de Consultas Duplicadas**: O sistema verifica se um CNPJ já foi consultado na mesma execução para evitar consultas redundantes.
-
-8. **Hierarquia de Empresas**: O sistema mantém o relacionamento entre empresa pai e empresa antecessora na estrutura societária.
-
----
-
-## 6. Relação entre Entidades
-
-**DetalhesSocio**: Entidade principal que representa um sócio de uma empresa
-- Atributos: nuCnpj, dtConsulta, tpPessoaSocio, nuDocumentoSocio, dvDocumentoSocio, nmSocio, dsNacionalidadeSocio, pcCapitalSocio, dtEntradaSocio, flRestricaoSocio, pcCapitalVolanteSocio, stSocio, nuSeq, nuCnpjEmpresaPai
-
-**ConsultaSocios**: Objeto de controle da consulta recursiva
-- Atributos: qtdConsultas (contador), resultadoSocios (Set<DetalhesSocio>)
-- Relacionamento: Contém múltiplos DetalhesSocio
-
-**Representations (DTOs)**:
-- ObterSociosRequestRepresentation: numeroDocumento
-- ObterSociosResponseRepresentation: listaSocios (List<SocioRepresentation>)
-- SocioRepresentation: numeroDocumentoSocio, numeroDocumentoEmpresa, nomeSocio, percentualParticipacao, tipoPessoa, isListadoBolsa, nuDocumentoEmpresaAntecessora
-
----
-
-## 7. Estruturas de Banco de Dados Lidas
-
+### 7. Estruturas de Banco de Dados Lidas
 | Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
 |-----------------------------|------|----------|-----------------|
-| DBCONSULTACRED..TbSerasaPjCTSocietarioDetalhe | Tabela | SELECT | Tabela que armazena os detalhes dos sócios consultados no bureau Serasa |
-| DBCONSULTACRED..TbConsulta | Tabela | SELECT | Tabela que armazena informações sobre as consultas realizadas ao bureau (usada para obter a data da última consulta) |
+| TbSerasaPjCTSocietarioDetalhe | tabela | SELECT | Detalhes de sócios consultados. |
 
----
+### 8. Estruturas de Banco de Dados Atualizadas
+Não se aplica.
 
-## 8. Estruturas de Banco de Dados Atualizadas
+### 9. Filas Lidas
+Não se aplica.
 
-não se aplica
+### 10. Filas Geradas
+Não se aplica.
 
----
+### 11. Integrações Externas
+- Serviço de crédito bureau para consulta de restrições e informações de sócios.
 
-## 9. Arquivos Lidos e Gravados
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| logback-spring.xml | leitura | /usr/etc/log/ (runtime) | Arquivo de configuração de logs em formato JSON |
-| application.yml | leitura | src/main/resources | Arquivo de configuração principal da aplicação |
-| application-local.yml | leitura | src/main/resources | Arquivo de configuração para ambiente local |
-| CreditoBureauBackendService_v2.wsdl | leitura | src/main/resources/wsdl | WSDL do serviço de Bureau de Crédito |
+**Justificativa:** O código é bem estruturado e utiliza boas práticas de desenvolvimento, como injeção de dependências e separação de responsabilidades. A documentação via Swagger é um ponto positivo. Poderia melhorar em aspectos de tratamento de exceções e cobertura de testes.
 
----
-
-## 10. Filas Lidas
-
-não se aplica
-
----
-
-## 11. Filas Geradas
-
-não se aplica
-
----
-
-## 12. Integrações Externas
-
-1. **Serviço SOAP de Bureau de Crédito (Serasa)**: 
-   - Endpoint: ${SERVICEBUS_HOST}/services/CreditoBureauBackendServiceV2
-   - Operação: consultarRestricoesBureau
-   - Descrição: Serviço externo que realiza consultas de crédito e informações societárias no bureau Serasa
-   - Classe responsável: BureauCreditoRepository
-
-2. **Banco de Dados Sybase (DBCONSULTACRED)**:
-   - Host: Variável por ambiente (DES/QA/UAT/PRD)
-   - Descrição: Banco de dados que armazena os resultados das consultas ao bureau
-   - Classe responsável: SocioRepository
-
-3. **LDAP (Autenticação)**:
-   - Descrição: Serviço de autenticação corporativa via LDAP
-   - Configuração: WebServiceTemplateConfiguration, application.yml
-
----
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota: 7/10**
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Boa separação de responsabilidades com camadas bem definidas (controller, service, repository)
-- Uso adequado de injeção de dependências
-- Implementação de testes unitários
-- Configuração adequada de segurança e auditoria
-- Uso de DTOs (Representations) para separar modelo de domínio da API
-- Sanitização de logs para segurança
-- Documentação via Swagger
-
-**Pontos de Melhoria:**
-- Lógica complexa de consulta recursiva no ObterSociosService poderia ser refatorada em métodos menores
-- Método `complementarNuCpnj` realiza até 9999 iterações, o que pode impactar performance
-- Falta de tratamento de exceções mais específico em alguns pontos
-- Alguns métodos muito longos (ex: `consultarSocios` com múltiplas responsabilidades)
-- Falta de validação mais robusta de entrada de dados
-- Comentários em português misturados com código em inglês
-- Uso de `@Autowired` em construtores poderia ser substituído por injeção via construtor sem anotação (Spring 4.3+)
-- Falta de testes de integração implementados (diretório vazio)
-
----
-
-## 14. Observações Relevantes
-
-1. **Limite de Consultas**: O sistema possui um limite configurável de 500 consultas para evitar loops infinitos na estrutura societária. Este valor pode precisar de ajuste dependendo da complexidade das estruturas empresariais consultadas.
-
-2. **Complementação de CNPJ**: A lógica de complementação de CNPJ (método `complementarNuCpnj`) pode ser custosa em termos de performance, pois tenta até 9999 combinações. Considerar otimizações ou cache.
-
-3. **Ambientes**: O sistema está configurado para 4 ambientes (DES, QA, UAT, PRD) com configurações específicas de banco de dados e URLs de serviço.
-
-4. **Segurança**: Implementa autenticação básica e LDAP, com endpoints públicos configuráveis.
-
-5. **Monitoramento**: Integração completa com Prometheus/Grafana para métricas e monitoramento.
-
-6. **Containerização**: Dockerfile configurado para deploy em ambiente Google Cloud Platform (GCP).
-
-7. **Versionamento**: O projeto está na versão 0.17.0, indicando que ainda está em desenvolvimento ativo.
-
-8. **Dependências Corporativas**: Utiliza extensivamente bibliotecas internas do Banco Votorantim (arqt-base-*).
+### 13. Observações Relevantes
+- O sistema utiliza Docker para containerização e Prometheus/Grafana para monitoramento.
+- A configuração de segurança inclui autenticação básica e integração com LDAP.

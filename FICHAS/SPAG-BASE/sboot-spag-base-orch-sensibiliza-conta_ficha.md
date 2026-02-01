@@ -1,148 +1,70 @@
----
+```markdown
 ## Ficha Técnica do Sistema
 
 ### 1. Descrição Geral
-Sistema orquestrador responsável por sensibilizar contas em operações de pagamento de boletos para parceiros Fintech. O sistema realiza três operações principais:
-- Atualização de valores de pagamento de boleto de parceiros Fintech (processo assíncrono)
-- Estorno de valores de pagamento de boleto de parceiros Fintech em caso de exceção (processo assíncrono)
-- Estorno de valores já debitados de clientes Cash em caso de exceção (processo síncrono)
-
-O sistema utiliza arquitetura orientada a eventos com Apache Camel para orquestração de fluxos e Google Cloud Pub/Sub para mensageria assíncrona.
+O sistema "SensibilizaConta" é um serviço stateless que orquestra três funcionalidades principais: atualização do valor de pagamento de boleto de um parceiro Fintech, estorno do valor de pagamento de boleto de um parceiro Fintech em caso de exceção, e estorno do valor de pagamento já debitado de cliente Cash em caso de exceção. Ele utiliza processos assíncronos e síncronos para realizar essas operações.
 
 ### 2. Principais Classes e Responsabilidades
-
-| Classe | Responsabilidade |
-|--------|------------------|
-| `SensibilizaContaService` | Serviço de domínio que coordena as operações de sensibilização de conta |
-| `SensibilizaContaSubscriber` | Subscriber que recebe comandos via Pub/Sub e delega ao serviço |
-| `ContaCorrenteImpl` | Implementação de integração com serviço de conta corrente (PGFT) |
-| `PosicaoFintechImpl` | Implementação de integração com serviço de posição Fintech (SPAG) |
-| `SaldoFintechImpl` | Implementação de consulta de saldo Fintech (CCBD) |
-| `EventoPublisherImpl` | Publicador de eventos de retorno via Pub/Sub |
-| `CamelContextWrapper` | Wrapper do contexto Apache Camel para orquestração |
-| `ClienteCashEstonoRouter` | Rota Camel para estorno em conta corrente |
-| `PosicaoFintechAtualizacaoRouter` | Rota Camel para atualização de posição Fintech |
-| `PosicaoFintechEstornoRouter` | Rota Camel para estorno de posição Fintech |
-| `ValidacaoCamaraLiquidacaoRouter` | Rota Camel para validação de câmara de liquidação |
-| `CamaraLiquidacaoProcessor` | Processador que valida grade horária e data de movimento |
+- **Application**: Classe principal para inicialização do Spring Boot.
+- **SensibilizaContaService**: Serviço de domínio que gerencia as operações de atualização e estorno de valores.
+- **CamelContextWrapper**: Wrapper para o contexto do Apache Camel, gerenciando rotas e templates de produtor/consumidor.
+- **ContaCorrenteImpl**: Implementação do cliente para operações de estorno em conta corrente.
+- **PosicaoFintechImpl**: Implementação do cliente para operações de estorno e atualização de posição Fintech.
+- **SaldoFintechImpl**: Implementação do cliente para consulta de saldo Fintech.
+- **EventoPublisherImpl**: Implementação do publisher de eventos para o PubSub.
+- **SensibilizaContaSubscriber**: Componente que recebe comandos via PubSub e aciona o serviço correspondente.
 
 ### 3. Tecnologias Utilizadas
-- **Framework:** Spring Boot 2.x
-- **Orquestração:** Apache Camel 3.0.1
-- **Mensageria:** Google Cloud Pub/Sub (Spring Cloud GCP 2.0.4)
-- **Integração:** Spring Integration
-- **Pool de Conexões:** HikariCP
-- **Documentação API:** Swagger/Springfox 2.9.2
-- **Serialização:** Jackson
-- **Monitoramento:** Spring Actuator + Prometheus + Grafana
-- **Segurança:** OAuth2/JWT
-- **Auditoria:** BV Trilha Auditoria 2.2.1
-- **Build:** Maven
-- **Java:** JDK 11
-- **Container:** Docker (OpenJ9 Alpine)
-- **Plataforma:** Google Cloud Platform (GKE)
+- Spring Boot
+- Apache Camel
+- Google Cloud PubSub
+- Swagger
+- Prometheus
+- Grafana
+- Docker
 
 ### 4. Principais Endpoints REST
-Não se aplica. O sistema não expõe endpoints REST públicos, operando exclusivamente via mensageria assíncrona (Pub/Sub).
+| Método | Endpoint | Classe Controladora | Descrição |
+|--------|----------|---------------------|-----------|
+| GET    | /actuator/health | N/A | Verifica o estado da aplicação |
+| N/A    | N/A      | N/A                 | Não se aplica |
 
 ### 5. Principais Regras de Negócio
-- **Validação de Grade Horária:** Atualização de posição Fintech só é permitida dentro da grade horária da câmara de liquidação
-- **Validação de Data de Movimento:** Atualização só é permitida se a data de movimento for igual à data atual
-- **Consulta de Saldo Disponível:** Antes de atualizar posição Fintech, consulta o saldo disponível na conta
-- **Conversão de Código de Banco:** Converte código COMPE para código interno do banco (BV SA: 413→436, Votorantim SA: 655→161)
-- **Tratamento de Exceções:** Diferencia exceções de negócio (rejeitadas) de exceções técnicas (falhas)
-- **Publicação de Eventos:** Publica eventos específicos para cada resultado (realizado, rejeitado, falhou)
-- **Tipo de Conta:** Utiliza tipo de conta 6 (Conta Controle) para consultas de saldo
-- **Sistema de Origem:** Utiliza código de sistema 4 para operações de conta corrente
+- Atualização de posição Fintech deve ocorrer apenas se a data de movimento for igual à data atual e dentro do horário permitido.
+- Estorno de valores deve ser realizado em caso de exceção durante o processamento de pagamentos.
+- Eventos de sucesso ou falha são publicados no PubSub para integração com outros sistemas.
 
 ### 6. Relação entre Entidades
-
-**Entidades de Domínio:**
-- `ContaCorrenteEstorno`: Contém código de lançamento para estorno em conta corrente
-- `PosicaoFintechAtualizacao`: Contém dados para atualização (código lançamento, banco COMPE, agência, conta, valor, data movimento, câmara liquidação)
-- `PosicaoFintechEstorno`: Contém dados para estorno (código lançamento, conta, valor)
-- `CamaraLiquidacaoResponse`: Contém código liquidação e grade horária (início/fim)
-
-**Eventos:**
-- Hierarquia base: `Evento` (contém código lançamento)
-  - `ErroEvento`: Evento com descrição de erro
-  - `ErroNegocioEvento`: Evento com lista de erros de negócio
-  - Eventos específicos de Posição Fintech (Atualização/Estorno: Realizada, Rejeitada, Falhou)
-  - Eventos específicos de Conta Corrente (Estorno: Realizado, Rejeitado, Falhou)
-
-**Relacionamentos:**
-- PosicaoFintechAtualizacao → CamaraLiquidacaoResponse (composição)
-- Todos os eventos herdam de Evento
+- **ContaCorrenteEstorno**: Representa uma solicitação de estorno em conta corrente.
+- **PosicaoFintechAtualizacao**: Representa uma atualização de posição Fintech.
+- **PosicaoFintechEstorno**: Representa um estorno de posição Fintech.
+- **Evento**: Classe base para eventos, com subclasses para diferentes tipos de eventos de estorno e atualização.
 
 ### 7. Estruturas de Banco de Dados Lidas
-
-Não se aplica. O sistema não acessa diretamente estruturas de banco de dados, realizando todas as operações via APIs REST de outros microserviços.
+Não se aplica.
 
 ### 8. Estruturas de Banco de Dados Atualizadas
+Não se aplica.
 
-Não se aplica. O sistema não atualiza diretamente estruturas de banco de dados, delegando todas as operações de escrita para outros microserviços via APIs REST.
+### 9. Filas Lidas
+- **business-spag-sensibilizacao-conta-sub**: Fila de entrada para comandos de sensibilização de conta.
 
-### 9. Arquivos Lidos e Gravados
+### 10. Filas Geradas
+- **business-spag-retorno-processo-pagamento-boleto**: Fila de saída para retorno de processos de pagamento de boleto.
 
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| `logback-spring.xml` | Leitura | `/usr/etc/log` (ConfigMap) | Configuração de logs da aplicação |
-| `application.yml` | Leitura | `src/main/resources` | Configurações da aplicação Spring Boot |
-| Swagger YAML (3 arquivos) | Leitura | `src/main/resources/swagger/client` | Especificações OpenAPI para geração de clientes |
+### 11. Integrações Externas
+- APIs de parceiros Fintech para atualização e estorno de valores.
+- Google Cloud PubSub para comunicação assíncrona de eventos.
 
-### 10. Filas Lidas
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
-| Nome da Fila | Tecnologia | Classe Consumidora | Breve Descrição |
-|--------------|-----------|-------------------|-----------------|
-| `business-spag-sensibilizacao-conta-sub` | Google Cloud Pub/Sub | `SensibilizaContaSubscriber` | Recebe comandos de sensibilização de conta (atualizar/estornar posição Fintech, estornar cliente Cash) |
+**Justificativa:** O código é bem estruturado e utiliza boas práticas de programação, como injeção de dependências e uso de interfaces. A documentação está presente e as classes são bem organizadas, facilitando a manutenção. No entanto, poderia haver uma maior cobertura de testes unitários para garantir a robustez do sistema.
 
-### 11. Filas Geradas
+### 13. Observações Relevantes
+- O sistema utiliza o Apache Camel para orquestrar rotas de processamento, o que facilita a integração e manipulação de mensagens.
+- A configuração do sistema é gerenciada via arquivos YAML e propriedades do Spring Boot, permitindo flexibilidade entre diferentes ambientes.
+- O uso de Prometheus e Grafana para monitoramento garante que o sistema possa ser observado e gerenciado eficientemente em produção.
 
-| Nome da Fila | Tecnologia | Classe Produtora | Breve Descrição |
-|--------------|-----------|-----------------|-----------------|
-| `business-spag-retorno-processo-pagamento-boleto` | Google Cloud Pub/Sub | `EventoPublisherImpl` | Publica eventos de retorno do processo de sensibilização (realizados, rejeitados, falhas) |
-
-### 12. Integrações Externas
-
-| Sistema Externo | Tipo | Classe Responsável | Breve Descrição |
-|-----------------|------|-------------------|-----------------|
-| `sboot-pgft-base-orch-pagamentos` | API REST | `ContaCorrenteImpl` | Orquestrador de pagamentos PGFT - realiza estorno de documentos em conta corrente |
-| `sboot-spag-base-atom-posicao-fintech` | API REST | `PosicaoFintechImpl` | Atômico de posição Fintech - atualiza e estorna valores de posição |
-| `sboot-ccbd-base-atom-saldo` | API REST | `SaldoFintechImpl` | Atômico de saldo CCBD - consulta saldo disponível em contas |
-| API Gateway OAuth | OAuth2 | `GatewayOAuthService` | Serviço de autenticação para obtenção de tokens de acesso |
-
-### 13. Avaliação da Qualidade do Código
-
-**Nota:** 8/10
-
-**Justificativa:**
-- **Pontos Positivos:**
-  - Arquitetura bem estruturada com separação clara de responsabilidades (domain, application, common)
-  - Uso adequado de padrões como Ports & Adapters (Hexagonal Architecture)
-  - Boa cobertura de testes unitários e de integração
-  - Uso de Apache Camel para orquestração de fluxos complexos
-  - Tratamento diferenciado de exceções de negócio e técnicas
-  - Configuração externalizada e adequada para múltiplos ambientes
-  - Uso de Lombok para redução de boilerplate
-  - Documentação via Swagger
-  - Monitoramento com Actuator/Prometheus
-
-- **Pontos de Melhoria:**
-  - Alguns processadores Camel poderiam ter lógica mais simplificada
-  - Falta documentação JavaDoc em algumas classes críticas
-  - Alguns métodos de conversão poderiam ser extraídos para classes utilitárias
-  - Validações de entrada poderiam ser mais explícitas com Bean Validation
-  - Alguns nomes de variáveis poderiam ser mais descritivos (ex: "sadoDisponivel" com typo)
-
-### 14. Observações Relevantes
-
-- **Arquitetura Assíncrona:** Sistema predominantemente orientado a eventos, com processamento assíncrono via Pub/Sub
-- **Orquestração com Camel:** Uso extensivo de Apache Camel para orquestração de fluxos complexos com tratamento de exceções
-- **Validações Temporais:** Implementa validações rigorosas de grade horária e data de movimento para garantir integridade das operações
-- **Multi-tenant:** Suporta múltiplos bancos (BV SA e Votorantim SA) com conversão de códigos
-- **Resiliência:** Implementa padrão de retry e tratamento de falhas com publicação de eventos específicos
-- **Observabilidade:** Configuração completa de métricas, logs e dashboards Grafana
-- **Infraestrutura como Código:** Configuração completa para deploy em Kubernetes/OpenShift via GCP
-- **Segurança:** Integração com OAuth2/JWT para autenticação em APIs externas
-- **Auditoria:** Integração com trilha de auditoria corporativa do BV
-- **Versionamento:** Sistema versionado (0.2.0) com controle de mudanças
+---
+```

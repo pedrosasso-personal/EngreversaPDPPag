@@ -1,166 +1,75 @@
-# Ficha Técnica do Sistema
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
+### 1. Descrição Geral
+O sistema "java-spag-base-agenda-pagamento" é responsável por gerenciar o agendamento de pagamentos. Ele permite a inserção, atualização e verificação de agendamentos de pagamentos, além de lidar com ocorrências e exceções relacionadas ao processo de agendamento. O sistema utiliza uma arquitetura baseada em Java EE, com integração a bancos de dados e serviços externos.
 
-O sistema **java-spag-base-agenda-pagamento** é um componente Java EE responsável pelo agendamento de pagamentos no contexto do sistema SPAG (Sistema de Pagamentos). Ele recebe solicitações de agendamento de diversos tipos de transações financeiras (TED, DOC, Boletos, Transferências, Tributos, Concessionárias), valida as informações, persiste os dados de agendamento em banco de dados e controla o status dos lançamentos. O sistema verifica se o pagamento deve ser agendado com base na data informada, trata situações de saldo insuficiente considerando horários limites específicos por tipo de transação, e mantém o histórico de agendamentos e favorecidos.
+### 2. Principais Classes e Responsabilidades
+- **AgendaPagamentoServiceImpl**: Implementa a lógica de negócios para agendamento de pagamentos, incluindo inserção, atualização e verificação de agendamentos.
+- **AgendaPagamentoService**: Interface que define os métodos para manipulação de agendamentos de pagamento.
+- **AgendaPagamentoBean**: Bean responsável por realizar o agendamento de pagamentos, integrando com o serviço de agendamento.
+- **AgendamentoFavorecidoDTO**: DTO que representa os dados do favorecido no agendamento de pagamento.
+- **AgendamentoPagamentoDTO**: DTO que representa os dados do agendamento de pagamento.
+- **AgendamentoFavorecidoDAOImpl**: Implementação do DAO para manipulação de dados de favorecidos no banco de dados.
+- **AgendamentoPagamentoDAOImpl**: Implementação do DAO para manipulação de dados de agendamentos de pagamento no banco de dados.
 
----
+### 3. Tecnologias Utilizadas
+- Java EE
+- Maven
+- JPA
+- EJB
+- JAX-RS
+- JAX-WS
+- Spring JDBC
+- Apache Commons Lang
+- Joda-Time
+- Gson
+- Log4j
+- Swagger
 
-## 2. Principais Classes e Responsabilidades
+### 4. Principais Endpoints REST
+| Método | Endpoint                       | Classe Controladora | Descrição                                      |
+|--------|--------------------------------|---------------------|------------------------------------------------|
+| POST   | /atacado/pagamentos/agendaPagamento/ | AgendaPagamento     | Realiza o agendamento de um pagamento.         |
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| **AgendaPagamentoBean** | EJB Stateless que orquestra o processo de agendamento, validando datas, verificando saldo, inserindo/atualizando agendamentos e tratando exceções |
-| **AgendaPagamentoServiceImpl** | Implementação do serviço de negócio que converte objetos de domínio, valida se pagamento deve ser agendado, e coordena operações de persistência |
-| **AgendamentoPagamentoDAOImpl** | DAO responsável por operações de banco de dados relacionadas a agendamentos (inserção, atualização, consulta de existência) |
-| **AgendamentoFavorecidoDAOImpl** | DAO responsável por persistir informações dos favorecidos associados aos agendamentos |
-| **AgendaPagamento (REST)** | Endpoint REST que expõe a funcionalidade de agendamento via API JSON |
-| **AgendamentoPagamentoDTO** | DTO que representa a entidade de agendamento de pagamento com todos os atributos necessários |
-| **AgendamentoFavorecidoDTO** | DTO que representa os favorecidos de um agendamento (suporta múltiplos favorecidos) |
-| **Util** | Classe utilitária com métodos de conversão de tipos, manipulação de datas e tratamento de valores nulos |
+### 5. Principais Regras de Negócio
+- Verificação se o pagamento está agendado para uma data futura.
+- Inserção de novos agendamentos de pagamento.
+- Atualização de agendamentos existentes.
+- Tratamento de saldo insuficiente para agendamentos no mesmo dia.
+- Geração de ocorrências para erros genéricos e saldo insuficiente.
 
----
+### 6. Relação entre Entidades
+- **AgendamentoPagamentoDTO** possui uma relação com **AgendamentoFavorecidoDTO**, onde um agendamento de pagamento pode ter múltiplos favorecidos.
+- **StatusAgendamentoEnum** e **TipoAgendamentoTransacaoEnum** são usados para definir o status e o tipo de transação de agendamentos.
 
-## 3. Tecnologias Utilizadas
+### 7. Estruturas de Banco de Dados Lidas
+| Nome da Tabela/View/Coleção | Tipo      | Operação | Breve Descrição                             |
+|-----------------------------|-----------|----------|---------------------------------------------|
+| TbAgendamentoPagamento      | tabela    | SELECT   | Armazena os dados dos agendamentos de pagamento. |
 
-- **Java EE 7** (EJB 3.1, CDI, JAX-RS, JAX-WS)
-- **IBM WebSphere Application Server** (runtime)
-- **Maven** (gerenciamento de dependências e build)
-- **Spring JDBC** (acesso a dados via JDBC Template)
-- **Gson** (serialização/deserialização JSON)
-- **Apache Commons Lang3** (utilitários)
-- **Joda-Time** (manipulação de datas)
-- **SLF4J/Log4j2** (logging)
-- **JUnit, Mockito, PowerMock** (testes unitários)
-- **Swagger/OpenAPI** (documentação de APIs REST)
+### 8. Estruturas de Banco de Dados Atualizadas
+| Nome da Tabela/View/Coleção | Tipo      | Operação         | Breve Descrição                             |
+|-----------------------------|-----------|------------------|---------------------------------------------|
+| TbAgendamentoPagamento      | tabela    | INSERT/UPDATE    | Armazena os dados dos agendamentos de pagamento. |
+| TbAgendamentoFavorecido     | tabela    | INSERT           | Armazena os dados dos favorecidos nos agendamentos. |
 
----
-
-## 4. Principais Endpoints REST
-
-| Método | Endpoint | Classe Controladora | Descrição |
-|--------|----------|---------------------|-----------|
-| POST | /v1/atacado/pagamentos/agendaPagamento/ | AgendaPagamento | Recebe solicitação de agendamento de pagamento em formato JSON e retorna o resultado do processamento |
-
----
-
-## 5. Principais Regras de Negócio
-
-1. **Validação de Data de Agendamento**: Pagamentos só são agendados se a data for futura ou igual à data atual
-2. **Horários Limites por Tipo**: 
-   - Tributos e Concessionárias: limite até 14:45
-   - Demais tipos (Boleto, TED, DOC, etc): limite até 15:30
-3. **Tratamento de Saldo Insuficiente**: Se o saldo for insuficiente e o horário atual ultrapassar o limite do tipo de transação, gera ocorrência de erro e cancela o agendamento
-4. **Antecipação de Pagamento**: Sistema suporta flag de antecipação de pagamento
-5. **Mesma Titularidade**: Identifica se remetente e favorecido são a mesma pessoa
-6. **Múltiplos Favorecidos**: Suporta até 2 favorecidos por agendamento
-7. **Atualização de Status**: Atualiza status do lançamento na tabela TbLancamento (10=Agendado, 99=Erro)
-8. **Verificação de Duplicidade**: Verifica se já existe agendamento para o mesmo lançamento, data e tipo de transação
-9. **Conversão de Tipos de Liquidação**: Mapeia códigos ITP para tipos de agendamento (CC, DOC, TED, Boleto, etc)
-
----
-
-## 6. Relação entre Entidades
-
-**AgendamentoPagamento** (1) -----> (N) **AgendamentoFavorecido**
-
-- Um agendamento de pagamento pode ter múltiplos favorecidos (até 2)
-- Relacionamento através do campo `CdAgendamentoPagamento`
-- AgendamentoPagamento contém dados da transação, valores, datas, contas origem/destino
-- AgendamentoFavorecido contém dados dos beneficiários (nome, CPF/CNPJ, ordem de titularidade)
-
----
-
-## 7. Estruturas de Banco de Dados Lidas
-
-| Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
-|-----------------------------|------|----------|-----------------|
-| TbAgendamentoPagamento | tabela | SELECT | Consulta existência de agendamento por data, tipo e código de lançamento |
-
----
-
-## 8. Estruturas de Banco de Dados Atualizadas
-
-| Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
-|-----------------------------|------|----------|-----------------|
-| TbAgendamentoPagamento | tabela | INSERT | Insere novo registro de agendamento de pagamento |
-| TbAgendamentoPagamento | tabela | UPDATE | Atualiza status e data de alteração de agendamento existente |
-| TbAgendamentoFavorecido | tabela | INSERT | Insere registros de favorecidos associados ao agendamento |
-| TbLancamento | tabela | UPDATE | Atualiza status do lançamento (10=Agendado, 99=Erro) |
-
----
-
-## 9. Arquivos Lidos e Gravados
-
+### 9. Filas Lidas
 não se aplica
 
----
-
-## 10. Filas Lidas
-
+### 10. Filas Geradas
 não se aplica
 
----
+### 11. Integrações Externas
+- Integração com serviços REST e SOAP para manipulação de agendamentos de pagamento.
+- Utilização de JAX-RS para exposição de APIs REST.
+- Utilização de JAX-WS para serviços SOAP.
 
-## 11. Filas Geradas
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
-não se aplica
+**Justificativa:** O código é bem estruturado e utiliza boas práticas de programação, como o uso de DTOs para transferência de dados e a separação clara entre camadas de negócio e persistência. No entanto, a documentação poderia ser mais detalhada em alguns pontos, e o tratamento de exceções poderia ser melhorado para aumentar a robustez do sistema.
 
----
-
-## 12. Integrações Externas
-
-| Sistema/Serviço | Tipo | Descrição |
-|-----------------|------|-----------|
-| java-spag-base-pagamentos-commons | Biblioteca | Utiliza classes de domínio compartilhadas (DicionarioPagamento, OcorrenciaDTO, enums) |
-| Banco de Dados Oracle/SQL Server | JDBC | Acesso direto via Spring JDBC Template para persistência de agendamentos |
-
----
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota: 7/10**
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Boa separação de responsabilidades em camadas (business, persistence, domain, commons)
-- Uso adequado de padrões Java EE (EJB, CDI, JAX-RS)
-- Implementação de testes unitários com boa cobertura
-- Uso de DTOs para transferência de dados
-- Logging adequado com SLF4J
-- Tratamento de exceções estruturado
-
-**Pontos de Melhoria:**
-- Presença de "magic numbers" e strings hardcoded (ex: "nova_esteira", status 10 e 99)
-- Métodos muito longos com múltiplas responsabilidades (ex: `convertDicionarioToAgendamento`)
-- Falta de constantes para valores repetidos
-- Comentários em português misturados com código
-- Uso de `StringUtils.left()` para truncar strings poderia ser melhor documentado
-- Tratamento genérico de exceções em alguns pontos
-- Dependência forte de classes de bibliotecas externas (DicionarioPagamento)
-- Código de teste com alguns métodos vazios ou incompletos
-
----
-
-## 14. Observações Relevantes
-
-1. **Arquitetura Modular**: O projeto está bem estruturado em módulos Maven (business, commons, domain, persistence, integration, jms, ws, rs, ear)
-
-2. **Deployment**: Aplicação empacotada como EAR para deploy em WebSphere Application Server
-
-3. **Segurança**: Utiliza roles de segurança Java EE ("spag-integracao", "intr-middleware") e autenticação BASIC
-
-4. **Horário de Verão**: Código possui tratamento específico para horário de verão brasileiro
-
-5. **Datasource JNDI**: Utiliza datasource `jdbc/spagBaseDBSPAGDS` configurado no servidor
-
-6. **Versionamento**: Projeto na versão 0.16.0, indicando estar em desenvolvimento/evolução
-
-7. **Pipeline CI/CD**: Possui arquivo `jenkins.properties` configurado para integração contínua
-
-8. **Documentação API**: Configurado Swagger para documentação automática dos endpoints REST
-
-9. **Compatibilidade**: Código compilado para Java 1.7, indicando necessidade de compatibilidade com versões antigas
-
-10. **Queries Externalizadas**: SQLs mantidos em arquivos XML separados, facilitando manutenção
+### 13. Observações Relevantes
+- O sistema utiliza uma arquitetura modular, facilitando a manutenção e a escalabilidade.
+- A configuração de segurança é feita através de arquivos XML específicos para o servidor WebSphere.
+- O sistema está preparado para integração com diferentes tipos de serviços, utilizando handlers para manipulação de requisições e respostas.

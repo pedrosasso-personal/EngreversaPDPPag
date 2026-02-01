@@ -1,144 +1,72 @@
-# Ficha Técnica do Sistema
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
+### 1. Descrição Geral
+O sistema "javabatch-ccbd-base-gera-interface-total-banco" é um aplicativo Java Batch que processa movimentações bancárias, gerando arquivos de interface contábil. Ele utiliza o framework de batch da BV Sistemas para gerenciar o processamento de dados de contas correntes, realizando operações de leitura, processamento e escrita de dados.
 
-Sistema batch Java responsável por gerar interface contábil (arquivo M06) com movimentações bancárias do Total Banco. O sistema busca movimentações de contas correntes (tipo conta 5, banco 161) em bases de dados Sybase e MySQL, processa os dados considerando dias úteis e não úteis, gera arquivo texto formatado e atualiza flags de controle de processamento. Suporta processamento inicial e reprocessamento de datas específicas.
+### 2. Principais Classes e Responsabilidades
+- **ItemProcessor**: Processa cada item de movimentação, atualizando o status de processamento e gerando atributos de contexto de trabalho.
+- **ItemReader**: Lê as movimentações a serem processadas, inicializando o contexto de trabalho com os dados necessários.
+- **ItemWriter**: Escreve as movimentações processadas em arquivos e atualiza o status de processamento no banco de dados.
+- **MyResumeStrategy**: Define a estratégia de retomada do processamento em caso de exceções, decidindo se o processamento deve continuar ou ser finalizado.
+- **DatasApuradas**: Representa datas apuradas para movimentações.
+- **InterfaceContabil**: Representa a interface contábil com informações de processamento.
+- **Movimento**: Representa uma movimentação bancária com detalhes como número da conta, tipo de transação e valor.
+- **TbMovimentoDiaRepositoryImpl**: Implementação do repositório para operações de movimentações diárias.
+- **TbProcessamentoInterfaceContblRepositoryImpl**: Implementação do repositório para operações de processamento de interfaces contábeis.
+- **Loader**: Utilitário para gerenciar o diretório de saída dos arquivos gerados.
 
-## 2. Principais Classes e Responsabilidades
+### 3. Tecnologias Utilizadas
+- Java
+- Apache Maven
+- Spring Framework
+- Log4j
+- BV Sistemas Framework Batch
+- MySQL
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| **ItemReader** | Lê registros de processamento pendentes, busca movimentações do dia ou reprocessamento, valida status |
-| **ItemProcessor** | Processa movimentações (atualmente apenas repassa dados, lógica comentada) |
-| **ItemWriter** | Gera arquivo M06 formatado, atualiza flags de processamento nas tabelas |
-| **MyResumeStrategy** | Estratégia de tratamento de erros do framework batch |
-| **TbMovimentoDiaRepositoryImpl** | Acesso a dados de movimentações (Sybase) |
-| **TbProcessamentoInterfaceContblRepositoryImpl** | Controle de processamento (MySQL) |
-| **InterfaceContabil** | Entidade de controle de processamento |
-| **Movimento** | Entidade de movimentação bancária |
-| **DatasApuradas** | Entidade para controle de datas (dias úteis/não úteis) |
-| **Loader** | Utilitário para configuração de pasta de saída |
+### 4. Principais Endpoints REST
+Não se aplica.
 
-## 3. Tecnologias Utilizadas
+### 5. Principais Regras de Negócio
+- Processamento de movimentações bancárias com base em datas apuradas.
+- Geração de arquivos de interface contábil para movimentações processadas.
+- Atualização do status de processamento no banco de dados após a geração dos arquivos.
+- Validação de processamento de movimentações com base em dias úteis e históricos.
 
-- **Framework**: BV Sistemas Framework Batch (proprietário)
-- **Linguagem**: Java 8
-- **Build**: Apache Maven
-- **Bancos de Dados**: 
-  - Sybase ASE (TbMovimentoDia, TbHistoricoMovimento)
-  - MySQL 8.0 (TbProcessamentoInterfaceContbl)
-- **Gerenciamento de Transações**: Bitronix JTA
-- **JDBC**: Spring JDBC Template (NamedParameterJdbcTemplate)
-- **Logging**: Log4j
-- **Criptografia**: BV Crypto (senhas)
-- **Testes**: JUnit
+### 6. Relação entre Entidades
+- **InterfaceContabil** possui informações de processamento como código, data de movimento e status.
+- **Movimento** contém detalhes da transação bancária, como número da conta, tipo de transação e valor.
+- **DatasApuradas** armazena datas relevantes para o processamento de movimentações.
 
-## 4. Principais Endpoints REST
+### 7. Estruturas de Banco de Dados Lidas
 
-Não se aplica (sistema batch, não possui endpoints REST).
+| Nome da Tabela/View/Coleção | Tipo (tabela/view/coleção) | Operação (SELECT/READ) | Breve Descrição |
+|-----------------------------|----------------------------|------------------------|-----------------|
+| TbMovimentoDia              | tabela                     | SELECT                 | Movimentações diárias de contas correntes |
+| TbHistoricoMovimento        | tabela                     | SELECT                 | Histórico de movimentações de contas correntes |
+| TbControleData              | tabela                     | SELECT                 | Controle de datas para processamento |
 
-## 5. Principais Regras de Negócio
+### 8. Estruturas de Banco de Dados Atualizadas
 
-1. **Seleção de Movimentações**: Busca apenas movimentações do tipo conta 5 (conta corrente) e banco 161
-2. **Processamento vs Reprocessamento**: 
-   - Processamento (P): busca movimentações não processadas (flInterfaceTB = 'N')
-   - Reprocessamento (R): busca movimentações já processadas em data específica (flInterfaceTB = 'S')
-3. **Tratamento de Dias Não Úteis**: Consulta TbControleData para identificar se deve buscar movimentações de finais de semana/feriados acumulados
-4. **Geração de Arquivo M06**: Formato fixo com header (tipo 00), registros de movimentação (tipo 1) e trailer (tipo 2)
-5. **Formatação de Campos**: Aplica zeros à esquerda em campos numéricos conforme layout específico
-6. **Atualização de Flags**: Marca movimentações como processadas (flInterfaceTB = 'S') após geração do arquivo
-7. **Controle de Status**: Atualiza status de processamento para 'F' (finalizado) após conclusão
+| Nome da Tabela/View/Coleção | Tipo (tabela/view/coleção) | Operação (INSERT/UPDATE/DELETE) | Breve Descrição |
+|-----------------------------|----------------------------|-------------------------------|-----------------|
+| TbMovimentoDia              | tabela                     | UPDATE                        | Atualização de status de interface para movimentações diárias |
+| TbHistoricoMovimento        | tabela                     | UPDATE                        | Atualização de status de interface para movimentações históricas |
+| TbProcessamentoInterfaceContbl | tabela                  | UPDATE                        | Atualização do status de processamento de interfaces contábeis |
 
-## 6. Relação entre Entidades
+### 9. Filas Lidas
+Não se aplica.
 
-**InterfaceContabil** (1) ← controla → (N) **Movimento**
-- InterfaceContabil: tabela de controle com data de movimento e status de processamento
-- Movimento: representa uma movimentação bancária individual
+### 10. Filas Geradas
+Não se aplica.
 
-**DatasApuradas**: entidade auxiliar que armazena datas de referência para busca de movimentações em períodos com dias não úteis
+### 11. Integrações Externas
+- Banco de dados MySQL para armazenamento e recuperação de dados de movimentações e interfaces contábeis.
 
-**Relacionamento com Tabelas**:
-- TbProcessamentoInterfaceContbl (MySQL) → controla execução
-- TbMovimentoDia (Sybase) → movimentações do dia corrente
-- TbHistoricoMovimento (Sybase) → movimentações históricas
-- TbControleData (Sybase) → controle de datas úteis/não úteis
+### 12. Avaliação da Qualidade do Código
+**Nota:** 7
 
-## 7. Estruturas de Banco de Dados Lidas
+**Justificativa:** O código é bem estruturado e utiliza boas práticas de programação, como a separação de responsabilidades em diferentes classes e o uso de frameworks para facilitar o processamento batch. No entanto, a documentação interna poderia ser mais detalhada, e há áreas onde o tratamento de exceções poderia ser aprimorado para melhorar a robustez do sistema.
 
-| Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
-|------------------------------|------|----------|-----------------|
-| TbProcessamentoInterfaceContbl | Tabela (MySQL) | SELECT | Controle de processamentos pendentes (status 'P') |
-| TbMovimentoDia | Tabela (Sybase) | SELECT | Movimentações bancárias do dia corrente |
-| TbHistoricoMovimento | Tabela (Sybase) | SELECT | Movimentações bancárias históricas |
-| TbControleData | Tabela (Sybase) | SELECT | Controle de datas úteis e não úteis por banco/agência |
-
-## 8. Estruturas de Banco de Dados Atualizadas
-
-| Nome da Tabela/View/Coleção | Tipo | Operação | Breve Descrição |
-|------------------------------|------|----------|-----------------|
-| TbProcessamentoInterfaceContbl | Tabela (MySQL) | UPDATE | Atualiza status para 'F' (finalizado) após processamento |
-| TbMovimentoDia | Tabela (Sybase) | UPDATE | Marca movimentações como processadas (flInterfaceTB='S', dtInterfaceTB) |
-| TbHistoricoMovimento | Tabela (Sybase) | UPDATE | Marca movimentações históricas como processadas |
-
-## 9. Arquivos Lidos e Gravados
-
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| {data}.M06 | Gravação | ItemWriter / pasta configurada em Loader | Arquivo de interface contábil formatado com movimentações |
-| statistics-{executionId}.log | Gravação | Framework Batch / pasta log/ | Log de estatísticas de execução |
-| robo.log | Gravação | Log4j / pasta log/ | Log de aplicação |
-| *-sql.xml | Leitura | QueryReader | Arquivos XML com queries SQL |
-
-## 10. Filas Lidas
-
-Não se aplica (sistema não consome filas).
-
-## 11. Filas Geradas
-
-Não se aplica (sistema não publica em filas).
-
-## 12. Integrações Externas
-
-| Sistema/Serviço | Tipo | Descrição |
-|-----------------|------|-----------|
-| Sybase ASE (DBCONTACORRENTE) | Banco de Dados | Base principal com movimentações bancárias (TbMovimentoDia, TbHistoricoMovimento) |
-| MySQL (CCBDContaCorrente) | Banco de Dados | Base de controle de processamento (TbProcessamentoInterfaceContbl) |
-| Sistema Contábil (consumidor) | Arquivo | Sistema que consome o arquivo M06 gerado |
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota: 5/10**
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Estrutura organizada seguindo padrão batch (Reader/Processor/Writer)
-- Uso de framework proprietário consolidado
-- Separação de responsabilidades em camadas (repository, service, domain)
-- Uso de injeção de dependências via Spring
-- Queries SQL externalizadas em arquivos XML
-
-**Pontos Negativos:**
-- **Código comentado**: ItemProcessor possui lógica inteira comentada, indicando refatoração incompleta
-- **Mistura de responsabilidades**: ItemReader executa lógica de negócio que deveria estar no Processor
-- **Falta de tratamento de erros**: Ausência de validações e tratamentos específicos
-- **Código duplicado**: Lógica de formatação com zeros repetida múltiplas vezes no ItemWriter
-- **Nomes de variáveis**: Uso de nomes genéricos e pouco descritivos (ex: "m", "arq")
-- **Hardcoded values**: Valores fixos espalhados pelo código (banco 161, tipo conta 5)
-- **Falta de documentação**: Ausência de JavaDoc e comentários explicativos
-- **SQL complexo**: Queries com tabelas temporárias e lógica complexa que poderia ser simplificada
-- **Encoding**: Comentários com caracteres corrompidos (encoding incorreto)
-- **Classes não utilizadas**: ExampleOf* classes ainda presentes no código
-
-## 14. Observações Relevantes
-
-1. **Ambientes**: Sistema configurado para DES, UAT e PRD com conexões distintas
-2. **Formato M06**: Layout proprietário com registros de tamanho fixo (header tipo 00, detalhe tipo 1, trailer tipo 2)
-3. **Transações**: Uso de JTA com Bitronix para gerenciamento transacional distribuído
-4. **Senhas**: Utiliza criptografia BV Crypto com token "BV_CRYPTO_TOKEN"
-5. **Execução**: Batch executável via shell script (.sh) ou batch Windows (.bat)
-6. **Concorrência**: Suporta execução concorrente (concurrentExecution=true)
-7. **Tabelas Temporárias**: Uso de tabelas temporárias (#M06BV655) no Sybase para otimização
-8. **Refatoração Pendente**: Código indica migração de lógica do Processor para Reader não finalizada
-9. **Framework Proprietário**: Dependência forte do framework BV Sistemas, dificultando portabilidade
-10. **Versionamento**: Versão 0.6.0 indica sistema ainda em evolução
+### 13. Observações Relevantes
+- O sistema utiliza arquivos XML para definir queries SQL, o que facilita a manutenção e atualização das operações de banco de dados.
+- A configuração de recursos para diferentes ambientes (DES, PRD, UAT) é gerida por arquivos XML, permitindo fácil adaptação do sistema para diferentes contextos de execução.

@@ -1,197 +1,77 @@
-# Ficha Técnica do Sistema
+## Ficha Técnica do Sistema
 
-## 1. Descrição Geral
+### 1. Descrição Geral
+O sistema é um orquestrador de mensagens utilizando Apache Camel para integração com o Sistema de Pagamentos Brasileiro (SPB). Ele processa, valida e envia mensagens para câmaras de liquidação, além de gerenciar o histórico e status das mensagens enviadas.
 
-O sistema **sboot-spbb-base-orch-envio-mensagem** é um orquestrador baseado em Apache Camel e Spring Boot, responsável por processar e enviar mensagens SPB (Sistema de Pagamentos Brasileiro) para câmaras de liquidação (STR, PAG, SRC). O sistema consome mensagens de tópicos Kafka, realiza validações, conversões, criptografia e envia as mensagens para filas IBM MQ, além de manter histórico e notificar status de processamento.
+### 2. Principais Classes e Responsabilidades
+- **AtualizarReplicaSpbLegadoProcessor**: Processa a atualização de réplicas no SPB legado.
+- **ConstruirMensagemProcessor**: Constrói a mensagem de envio para o SPB.
+- **ExceptionProcessor**: Processa exceções ocorridas durante o envio de mensagens.
+- **MensagemCamaraProcessor**: Processa mensagens para câmaras de liquidação.
+- **MensagemEnvioRetornoProcessor**: Processa o retorno de envio de mensagens.
+- **MensagemStatusErrorProcessor**: Processa erros de status de mensagens.
+- **MensagemStatusProcessor**: Processa o status de envio de mensagens.
+- **MontarMensagemProcessor**: Monta a mensagem processada para envio.
+- **PrepararMensagemCriptografarProcessor**: Prepara a mensagem para criptografia.
+- **ResilienciaExceptionProcessor**: Processa exceções de resiliência.
+- **ValidarMensagemProcessor**: Valida a mensagem antes do envio.
+- **ValidarPayloadProcessor**: Valida o payload da mensagem.
+- **ValidarReplicaSPBLegadoProcessor**: Valida a necessidade de processamento no SPB legado.
+- **VerificarHistoricoProcessor**: Verifica o histórico de mensagens.
 
----
+### 3. Tecnologias Utilizadas
+- Java 11
+- Spring Boot
+- Apache Camel
+- Kafka
+- IBM MQ
+- Swagger
+- Maven
 
-## 2. Principais Classes e Responsabilidades
+### 4. Principais Endpoints REST
+| Método | Endpoint | Classe Controladora | Descrição |
+|--------|----------|---------------------|-----------|
+| POST   | /v1/validar-mensagem | sbp-legado-controller | Validação de mensagens |
+| PUT    | /v1/spb-legado/replica | sbp-legado-controller | Atualização de SPB Legado Replica |
+| POST   | /v1/conversor/mensagem-envio | mensagemEnvio | Retorna mensagens XML para integração com BACEN |
+| GET    | /v1/movimentos/{cdMovimento}/existente | mensageriaHistorico | Verifica a existência de um movimento pelo código |
 
-| Classe | Responsabilidade |
-|--------|------------------|
-| `Application` | Classe principal que inicializa a aplicação Spring Boot |
-| `KafkaConsumer` | Consome mensagens do Kafka e dispara o processamento via Camel |
-| `EnvioMensagemSPBRouter` | Rota principal do Camel que orquestra todo o fluxo de envio de mensagens |
-| `SpbMensageriaRouter` | Rota responsável por incluir mensagens no atom-mensageria |
-| `SpbIntegracaoRouter` | Rota para validação de mensagens e atualização de réplica SPB legado |
-| `SpbMensageriaHistoricoRouter` | Rota para verificar existência de movimentos no histórico |
-| `CamelService` | Serviço que encapsula a execução de rotas Camel |
-| `EncryptService` | Serviço de criptografia de mensagens usando SPBSecJava |
-| `EnvioMensagemCamaraService` | Serviço para envio de mensagens para filas IBM MQ |
-| `MensagemProcessadaService` | Publica mensagens processadas no Kafka |
-| `MensagemStatusService` | Publica status de envio de mensagens no Kafka |
-| `SpbAtomMensageriaServiceImpl` | Implementação de integração com atom-mensageria |
-| `SpbAtomIntegracaoServiceImpl` | Implementação de integração com atom-integracao |
-| `SpbMensageriaHistoricoServiceImpl` | Implementação de integração com atom-mensageria-historico |
+### 5. Principais Regras de Negócio
+- Validação de mensagens antes do envio.
+- Criptografia de mensagens para segurança.
+- Atualização de réplicas no SPB legado.
+- Verificação de histórico de mensagens para evitar duplicidade.
+- Envio de mensagens para câmaras de liquidação.
 
----
+### 6. Relação entre Entidades
+- **EnvioMensagemSPBDomain**: Representa a mensagem a ser enviada, contendo informações como tipo, instituição, e conteúdo.
+- **ControleSPBDomain**: Informações de controle para o processamento da mensagem no SPB.
+- **MensagemCamaraDomain**: Representa a mensagem processada para câmaras de liquidação.
+- **MensagemCriptografar**: Contém informações para criptografia da mensagem.
 
-## 3. Tecnologias Utilizadas
+### 7. Estruturas de Banco de Dados Lidas
+Não se aplica.
 
-- **Spring Boot 2.7.7** - Framework base da aplicação
-- **Apache Camel** - Framework de integração e orquestração
-- **Apache Kafka** - Mensageria para consumo e publicação de eventos
-- **Apache Avro** - Serialização de mensagens Kafka
-- **IBM MQ** - Filas de mensagens para integração com câmaras
-- **SPBSecJava (Evaltec)** - Biblioteca de criptografia para mensagens SPB
-- **Hibernate/JPA** - Persistência de dados
-- **MapStruct** - Mapeamento de objetos
-- **Logback** - Logging em formato JSON
-- **OpenAPI/Swagger** - Documentação de APIs
-- **ConfigCat (Feature Toggle)** - Gerenciamento de feature flags
-- **Docker** - Containerização
-- **Maven** - Gerenciamento de dependências
+### 8. Estruturas de Banco de Dados Atualizadas
+Não se aplica.
 
----
+### 9. Filas Lidas
+- Kafka: Consome mensagens do tópico configurado no `application.yml`.
 
-## 4. Principais Endpoints REST
+### 10. Filas Geradas
+- Kafka: Publica mensagens processadas e status de envio em tópicos configurados.
 
-não se aplica - O sistema não expõe endpoints REST próprios, apenas consome de outros serviços via clients gerados.
+### 11. Integrações Externas
+- APIs de integração com SPB para validação e envio de mensagens.
+- IBM MQ para envio de mensagens a câmaras de liquidação.
+- Kafka para processamento de mensagens.
 
----
+### 12. Avaliação da Qualidade do Código
+**Nota:** 8
 
-## 5. Principais Regras de Negócio
+**Justificativa:** O código é bem estruturado e utiliza boas práticas de programação, como injeção de dependências e uso de padrões de projeto. A documentação é clara e os testes são abrangentes. No entanto, poderia haver uma melhor organização dos pacotes para facilitar a navegação.
 
-1. **Validação de Payload**: Valida campos obrigatórios da mensagem SPB antes do processamento
-2. **Verificação de Duplicidade**: Consulta histórico para evitar reprocessamento de mensagens já enviadas
-3. **Conversão de Mensagem**: Converte JSON para XML conforme catálogo do Bacen
-4. **Criptografia**: Criptografa mensagens usando algoritmos específicos do SPB
-5. **Roteamento por Instituição**: Direciona mensagens para filas específicas baseado no código COMPE (655 - Banco Votorantim, 413 - Banco BV SA)
-6. **Roteamento por Tipo de Mensagem**: Direciona para filas STR, PAG ou SRC conforme tipo da mensagem
-7. **Réplica SPB Legado**: Atualiza status em sistema legado para mensagens STR e PAG em caso de erro
-8. **Resiliência**: Implementa retry para erros de conexão com serviços de criptografia
-9. **Notificação de Status**: Publica eventos de status (sucesso/erro) no Kafka
-10. **Feature Toggle**: Permite alternar entre servidores de criptografia via feature flag
-
----
-
-## 6. Relação entre Entidades
-
-**EnvioMensagemSPBDomain** (entidade principal)
-- Contém: `ControleSPBDomain` (informações de controle SPB)
-- Relaciona-se com: `MensagemCriptografar` (dados para criptografia)
-- Gera: `MensagemCamaraDomain` (mensagem para envio à câmara)
-- Produz: `MensagemProcessadaSPB` (evento Kafka de mensagem processada)
-- Produz: `StatusEnvioMensagemSPB` (evento Kafka de status)
-
-**Fluxo de transformação:**
-```
-EnvioMensagemSPB (Avro) → EnvioMensagemSPBDomain → ValidarMensagemRequest → 
-ConversaoResponse → MensagemCriptografar → MensagemCamaraDomain → 
-MensagemProcessadaSPB + StatusEnvioMensagemSPB
-```
-
----
-
-## 7. Estruturas de Banco de Dados Lidas
-
-não se aplica - O sistema não acessa diretamente banco de dados, apenas consome de APIs de outros átomos.
-
----
-
-## 8. Estruturas de Banco de Dados Atualizadas
-
-não se aplica - O sistema não atualiza diretamente banco de dados, apenas invoca APIs de outros átomos que realizam as operações.
-
----
-
-## 9. Arquivos Lidos e Gravados
-
-| Nome do Arquivo | Operação | Local/Classe Responsável | Breve Descrição |
-|-----------------|----------|-------------------------|-----------------|
-| logback-spring.xml | leitura | Configuração Spring Boot | Arquivo de configuração de logs |
-| ESAPI.properties | leitura | Configuração OWASP | Configurações de segurança ESAPI |
-| application.yml | leitura | Configuração Spring Boot | Configurações da aplicação |
-| layers.xml | leitura | Build Docker | Definição de camadas para imagem Docker |
-| *.avsc | leitura | Avro Maven Plugin | Schemas Avro para geração de classes |
-| *.yaml/*.yml | leitura | OpenAPI Generator | Contratos OpenAPI para geração de clients |
-
----
-
-## 10. Filas Lidas
-
-| Nome da Fila | Tecnologia | Classe Responsável | Descrição |
-|--------------|------------|-------------------|-----------|
-| spbb-base-envio-mensagem-spb | Kafka | KafkaConsumer | Tópico de entrada com mensagens SPB para envio |
-
----
-
-## 11. Filas Geradas
-
-| Nome da Fila | Tecnologia | Classe Responsável | Descrição |
-|--------------|------------|-------------------|-----------|
-| spbb-base-mensagem-processada | Kafka | MensagemProcessadaService | Tópico com mensagens processadas (XML gerado) |
-| spbb-base-status-envio-mensagem | Kafka | MensagemStatusService | Tópico com status de envio das mensagens |
-| QR.REQ.59588111.00038166.01 | IBM MQ | EnvioMensagemCamaraService | Fila STR - Banco Votorantim (655) |
-| QR.REQ.59588111.04391007.01 | IBM MQ | EnvioMensagemCamaraService | Fila PAG - Banco Votorantim (655) |
-| QR.REQ.59588111.00038166.03 | IBM MQ | EnvioMensagemCamaraService | Fila SRC - Banco Votorantim (655) |
-| QR.REQ.01858774.00038166.01 | IBM MQ | EnvioMensagemCamaraService | Fila STR - Banco BV SA (413) |
-| QR.REQ.01858774.04391007.01 | IBM MQ | EnvioMensagemCamaraService | Fila PAG - Banco BV SA (413) |
-| QR.REQ.01858774.00038166.03 | IBM MQ | EnvioMensagemCamaraService | Fila SRC - Banco BV SA (413) |
-
----
-
-## 12. Integrações Externas
-
-| Sistema | Tipo | Classe Responsável | Descrição |
-|---------|------|-------------------|-----------|
-| sboot-spbb-base-atom-mensageria | REST API | SpbAtomMensageriaServiceImpl | Conversão de mensagens JSON para XML |
-| sboot-spbb-base-atom-integracao | REST API | SpbAtomIntegracaoServiceImpl | Validação de mensagens e atualização SPB legado |
-| sboot-spbb-base-atom-mensageria-historico | REST API | SpbMensageriaHistoricoServiceImpl | Consulta de movimentos no histórico |
-| EVALCryptoSPB | TCP Socket | EncryptService | Serviço de criptografia de mensagens SPB |
-| IBM MQ (QM.59588111.01) | MQ | EnvioMensagemCamaraService | Queue Manager Banco Votorantim |
-| IBM MQ (QM.01858774.01) | MQ | EnvioMensagemCamaraService | Queue Manager Banco BV SA |
-| Kafka Confluent Cloud | Kafka | KafkaConsumer/Producers | Mensageria de eventos |
-| ConfigCat | REST API | FeatureToggleService | Gerenciamento de feature flags |
-| API Gateway OAuth | REST API | GatewayOAuthService | Autenticação para chamadas entre serviços |
-
----
-
-## 13. Avaliação da Qualidade do Código
-
-**Nota:** 8/10
-
-**Justificativa:**
-
-**Pontos Positivos:**
-- Arquitetura bem estruturada seguindo padrões de orquestração com Apache Camel
-- Separação clara de responsabilidades (routers, processors, services, mappers)
-- Uso adequado de padrões como Builder, Strategy e Factory
-- Boa cobertura de testes unitários (fixtures, mocks bem estruturados)
-- Tratamento de exceções customizado e específico por tipo de erro
-- Uso de feature toggles para facilitar mudanças em produção
-- Configurações externalizadas e separadas por ambiente
-- Logging estruturado em JSON
-- Uso de MapStruct para mapeamento de objetos
-
-**Pontos de Melhoria:**
-- Algumas classes de processor poderiam ser mais coesas (ex: PrepararMensagemCriptografarProcessor faz validação e preparação)
-- Falta documentação JavaDoc em várias classes
-- Alguns métodos estáticos em mappers poderiam ser instâncias
-- Configurações de retry hardcoded em algumas anotações
-- Alguns nomes de variáveis poderiam ser mais descritivos (ex: "msg" ao invés de "mensagem")
-
----
-
-## 14. Observações Relevantes
-
-1. **Segurança**: O sistema utiliza criptografia específica do SPB através da biblioteca SPBSecJava da Evaltec, com conexão a servidores dedicados de criptografia.
-
-2. **Resiliência**: Implementa retry automático para falhas de conexão com servidores de criptografia (3 tentativas com backoff de 1 segundo).
-
-3. **Feature Toggle**: Possui flag `ft_boolean_spbb_base_novo_servidor_eval` para alternar entre servidores de criptografia antigos e novos sem necessidade de deploy.
-
-4. **Multi-tenancy**: Suporta dois bancos (655 - Votorantim e 413 - BV SA) com filas e queue managers separados.
-
-5. **Observabilidade**: Expõe métricas via Actuator na porta 9090 e logs estruturados em JSON para facilitar análise.
-
-6. **Containerização**: Utiliza estratégia de layers no Docker para otimizar builds e deploys.
-
-7. **Versionamento de Schemas**: Utiliza Avro para versionamento de mensagens Kafka com Schema Registry.
-
-8. **Ambientes**: Configurado para 3 ambientes (des, uat, prd) com configurações específicas de infraestrutura.
-
-9. **Dependências Críticas**: Depende de 3 átomos (mensageria, integracao, mensageria-historico) e servidores de criptografia externos.
-
-10. **Processamento Assíncrono**: Todo o fluxo é assíncrono, desde o consumo do Kafka até o envio para as filas MQ.
+### 13. Observações Relevantes
+- O sistema utiliza feature toggles para habilitar ou desabilitar funcionalidades de forma dinâmica.
+- A configuração de segurança é feita através de OAuth2, garantindo a proteção dos endpoints.
+- A aplicação é configurada para diferentes ambientes (desenvolvimento, teste, produção) através de arquivos YAML.
