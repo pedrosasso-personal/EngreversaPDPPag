@@ -9,6 +9,18 @@ import json
 import csv
 from pathlib import Path
 
+# Mapeamento de prefixos para tecnologias
+PREFIXO_TECNOLOGIA = {
+    "sboot": "Spring Boot",
+    "springboot": "Spring Boot",
+    "sbootlib": "Spring Boot (Library)",
+    "sbatch": "Spring Batch",
+    "javabatch": "Java Batch",
+    "java": "Java EE",
+    "ang": "Angular",
+}
+
+
 # Mapa de domínios com palavras-chave para classificação
 DOMINIOS = {
     "01.03": {
@@ -170,6 +182,61 @@ def extract_description(file_path):
         return f"Erro ao ler: {str(e)}"
 
 
+def extract_technology(file_path, component_name):
+    """Extrai a tecnologia/linguagem de uma ficha de componente."""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Tentar encontrar seção de Tecnologias Utilizadas
+        patterns = [
+            r'###?\s*\d*\.?\s*Tecnologias Utilizadas\s*\n+(.+?)(?=\n##|\n###|\n---|\Z)',
+            r'###?\s*Tecnologias\s*\n+(.+?)(?=\n##|\n###|\n---|\Z)',
+        ]
+
+        tech_section = None
+        for pattern in patterns:
+            match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
+            if match:
+                tech_section = match.group(1).strip()
+                break
+
+        # Extrair Framework principal da seção
+        if tech_section:
+            # Procurar por Framework
+            framework_match = re.search(r'\*\*Framework:\*\*\s*(.+?)(?:\n|$)', tech_section)
+            if framework_match:
+                framework = framework_match.group(1).strip()
+                # Limpar e simplificar
+                framework = re.sub(r'\s+\d+\.[\dx]+.*', '', framework)  # Remove versões
+                framework = framework.split(',')[0].strip()  # Pega só o primeiro se tiver vírgula
+                return framework
+
+            # Procurar por Linguagem
+            lang_match = re.search(r'\*\*Linguagem:\*\*\s*(.+?)(?:\n|$)', tech_section)
+            if lang_match:
+                return lang_match.group(1).strip().split(',')[0].strip()
+
+        # Fallback: usar prefixo do nome do componente
+        name_lower = component_name.lower()
+        for prefixo, tech in PREFIXO_TECNOLOGIA.items():
+            if name_lower.startswith(prefixo + "-") or name_lower.startswith(prefixo + "_"):
+                return tech
+
+        # Fallback final baseado em padrões no nome
+        if 'angular' in name_lower or name_lower.startswith('ang-'):
+            return "Angular"
+        if 'spring' in name_lower:
+            return "Spring Boot"
+        if 'batch' in name_lower:
+            return "Java Batch"
+
+        return "Java"  # Default
+
+    except Exception as e:
+        return "Desconhecido"
+
+
 def classify_domain(description, component_name):
     """Classifica o componente em um domínio baseado na descrição e nome."""
     text = (description + " " + component_name).lower()
@@ -287,6 +354,7 @@ def main():
         for ficha_file in sorted(sigla_dir.glob("*.md")):
             component_name = ficha_file.stem.replace("_ficha", "")
             description = extract_description(ficha_file)
+            technology = extract_technology(ficha_file, component_name)
             domain = classify_domain(description, component_name)
 
             rows.append({
@@ -294,6 +362,7 @@ def main():
                 "Descrição da Sigla": sigla_desc,
                 "Componente": component_name,
                 "Descrição do Componente": description,
+                "Tecnologia": technology,
                 "Domínio Funcional": domain
             })
 
@@ -301,13 +370,23 @@ def main():
     with open(output_file, 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.DictWriter(f, fieldnames=[
             "Sigla", "Descrição da Sigla", "Componente",
-            "Descrição do Componente", "Domínio Funcional"
+            "Descrição do Componente", "Tecnologia", "Domínio Funcional"
         ])
         writer.writeheader()
         writer.writerows(rows)
 
     print(f"Total de componentes processados: {len(rows)}")
     print(f"Arquivo gerado: {output_file}")
+
+    # Estatísticas por tecnologia
+    tech_counts = {}
+    for row in rows:
+        t = row["Tecnologia"]
+        tech_counts[t] = tech_counts.get(t, 0) + 1
+
+    print("\nDistribuição por Tecnologia:")
+    for tech, count in sorted(tech_counts.items(), key=lambda x: -x[1]):
+        print(f"  {tech}: {count}")
 
     # Estatísticas por domínio
     domain_counts = {}
